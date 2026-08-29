@@ -53,19 +53,12 @@ export default function ForgotPasswordForm() {
     setFormError(undefined);
 
     try {
-      /* ============================================================
-         TODO (Backend): เรียก API ส่ง reset link
-         
-         const res = await fetch("/api/auth/forgot-password", {
-           method: "POST",
-           headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({ email: fullEmail }), // ส่งอีเมลเต็ม
-         });
-         // Response 200 เสมอเพื่อกัน user enumeration
-         if (!res.ok) throw new Error();
-         ============================================================ */
-
-      await new Promise((r) => setTimeout(r, 1000)); // Stub
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: fullEmail }),
+      });
+      if (!res.ok) throw new Error();
       setStep("success");
     } catch {
       setFormError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");

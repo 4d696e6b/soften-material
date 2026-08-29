@@ -3,11 +3,6 @@
 /* ============================================================
    LoginForm.tsx — ฟอร์มเข้าสู่ระบบ
 
-   Mockup credentials (ใช้ระหว่างพัฒนา frontend):
-     Email    : demo@dome.tu.ac.th
-     Password : password123
-   เมื่อ backend พร้อม → ลบ MOCK_USER ออกแล้วเชื่อม API จริง
-
    Fields:
    1. อีเมล @dome.tu.ac.th (type="email", full address)
    2. รหัสผ่าน พร้อมปุ่มแสดง/ซ่อน
@@ -36,12 +31,6 @@ interface FormErrors {
 }
 
 const EMAIL_DOMAIN = "@dome.tu.ac.th";
-
-/* ---- Mockup user สำหรับ frontend dev (ลบออกเมื่อ backend พร้อม) ---- */
-const MOCK_USER = {
-  email: "demo@dome.tu.ac.th",
-  password: "password123",
-};
 
 /* ---- Validate ก่อน submit ---- */
 function validate(values: FormValues): FormErrors {
@@ -82,11 +71,9 @@ export default function LoginForm() {
     setErrors((prev) => ({ ...prev, [name]: undefined, form: undefined }));
   }
 
-  /* Submit handler */
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    /* 1. Validate ก่อน */
     const validationErrors = validate(values);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -98,20 +85,32 @@ export default function LoginForm() {
 
     const email = values.email.trim().toLowerCase();
 
-    /* ============================================================
-       MOCKUP LOGIN — ใช้ระหว่างพัฒนา frontend
-       เปรียบเทียบกับ MOCK_USER แทน API จริง
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: values.password }),
+      });
 
-       TODO (Backend): ลบ block นี้ทิ้ง แล้วแทนด้วย:
-         fetch("/api/auth/login", { method: "POST", ... })
-       ดูรายละเอียดใน backend_readme.txt หัวข้อ 7 Step 1
-       ============================================================ */
-    if (email === MOCK_USER.email && values.password === MOCK_USER.password) {
-      /* ถูกต้อง → ไปหน้า dashboard */
+      if (res.status === 401) {
+        setErrors({ form: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+        return;
+      }
+      if (res.status === 403) {
+        router.push("/verify-email");
+        return;
+      }
+      if (res.status === 429) {
+        const data = (await res.json().catch(() => null)) as { message?: string } | null;
+        setErrors({ form: data?.message ?? "ลองใหม่ในอีกสักครู่" });
+        return;
+      }
+      if (!res.ok) throw new Error();
+
       router.push("/dashboard");
-    } else {
-      /* ผิด → แสดง error */
-      setErrors({ form: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+    } catch {
+      setErrors({ form: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง" });
+    } finally {
       setIsLoading(false);
     }
   }

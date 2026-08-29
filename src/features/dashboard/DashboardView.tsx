@@ -9,24 +9,13 @@
    3. Status cards: บอกสถานะ Phase ต่าง ๆ
    4. Coming soon: บอกว่าฟีเจอร์ถัดไปกำลังมา
 
-   Mockup data:
-     - ชื่อ: Demo User
-     - อีเมล: demo@dome.tu.ac.th
-     - บทบาท: Student
-
-   เมื่อ backend พร้อม → แทนด้วย session จริง
+   ดึงผู้ใช้จาก GET /api/auth/me
    ============================================================ */
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import TULogo from "@/components/ui/TULogo";
-
-/* ---- Mockup user (ลบออกเมื่อเชื่อม backend) ---- */
-const MOCK_USER = {
-  name: "Demo User",
-  email: "demo@dome.tu.ac.th",
-  role: "Student" as const,
-  initial: "D",
-};
+import type { AuthUser } from "@/types";
 
 /* ---- Phase roadmap สำหรับแสดงใน dashboard ---- */
 const PHASES = [
@@ -68,13 +57,59 @@ const statusStyles: Record<"done" | "upcoming", { bg: string; text: string; dot:
   upcoming: { bg: "#fafafa", text: "#888888", dot: "#dddddd", label: "กำลังมา" },
 };
 
+function roleLabel(role: AuthUser["role"]) {
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
 export default function DashboardView() {
   const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
 
-  /* ออกจากระบบ — TODO (Backend): เรียก /api/auth/logout แล้ว redirect */
-  function handleLogout() {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadUser() {
+      const res = await fetch("/api/auth/me");
+      if (res.status === 401) {
+        router.replace("/login");
+        return;
+      }
+      if (res.status === 403) {
+        router.replace("/verify-email");
+        return;
+      }
+      if (!res.ok) {
+        router.replace("/login");
+        return;
+      }
+
+      const data = (await res.json()) as { user: AuthUser };
+      if (!cancelled) setUser(data.user);
+    }
+
+    loadUser();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   }
+
+  if (!user) {
+    return (
+      <div
+        className="min-h-dvh flex items-center justify-center"
+        style={{ background: "var(--color-bg-page)", color: "var(--color-text-muted)" }}
+      >
+        กำลังโหลด…
+      </div>
+    );
+  }
+
+  const initial = user.name.trim().charAt(0).toUpperCase() || "U";
 
   return (
     /* ============================================================
@@ -113,7 +148,7 @@ export default function DashboardView() {
               color: "var(--color-tu-yellow-dim)",
             }}
           >
-            {MOCK_USER.role}
+            {roleLabel(user.role)}
           </span>
         </div>
 
@@ -127,9 +162,9 @@ export default function DashboardView() {
               color: "var(--color-tu-yellow-dim)",
               border: "1.5px solid rgba(232,169,0,0.25)",
             }}
-            title={MOCK_USER.email}
+            title={user.email}
           >
-            {MOCK_USER.initial}
+            {initial}
           </div>
 
           {/* ชื่อผู้ใช้ (ซ่อนบน mobile เล็ก) */}
@@ -137,7 +172,7 @@ export default function DashboardView() {
             className="hidden sm:block text-sm"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            {MOCK_USER.name}
+            {user.name}
           </span>
 
           {/* ปุ่มออกจากระบบ */}
@@ -181,7 +216,7 @@ export default function DashboardView() {
             className="text-3xl sm:text-4xl font-bold leading-tight mb-3"
             style={{ color: "var(--color-text-primary)" }}
           >
-            สวัสดี, {MOCK_USER.name} 👋
+            สวัสดี, {user.name} 👋
           </h1>
 
           {/* Sub */}
@@ -196,7 +231,7 @@ export default function DashboardView() {
             <span
               style={{ color: "var(--color-text-primary)", fontFamily: "monospace", fontSize: "0.875rem" }}
             >
-              {MOCK_USER.email}
+              {user.email}
             </span>
           </p>
         </section>
