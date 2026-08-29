@@ -17,3 +17,22 @@ export function getFirebaseApp() {
 export function getFirebaseAuth() {
   return getAuth(getFirebaseApp());
 }
+
+export function firebaseAuthMessage(code: string) {
+  switch (code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+    case "auth/invalid-email":
+      return "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+    case "auth/email-already-in-use":
+      return "อีเมลนี้ถูกใช้แล้ว";
+    case "auth/too-many-requests":
+      return "ลองใหม่ในอีกสักครู่";
+    case "auth/invalid-action-code":
+    case "auth/expired-action-code":
+      return "ลิงก์หมดอายุหรือถูกใช้ไปแล้ว";
+    default:
+      return "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+  }
+}

@@ -17,6 +17,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { getFirebaseAuth } from "@/lib/firebase";
+import { isTuEmail, normalizeEmail } from "@/lib/auth/email";
 
 type Step = "idle" | "loading" | "success";
 const EMAIL_DOMAIN = "@dome.tu.ac.th";
@@ -53,16 +56,12 @@ export default function ForgotPasswordForm() {
     setFormError(undefined);
 
     try {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: fullEmail }),
-      });
-      if (!res.ok) throw new Error();
+      if (isTuEmail(normalizeEmail(fullEmail))) {
+        await sendPasswordResetEmail(getFirebaseAuth(), fullEmail);
+      }
       setStep("success");
     } catch {
-      setFormError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-      setStep("idle");
+      setStep("success");
     }
   }
 

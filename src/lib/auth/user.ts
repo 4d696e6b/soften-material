@@ -1,4 +1,4 @@
-import type { UserRecord } from "firebase-admin/auth";
+import type { User } from "firebase/auth";
 import type { AuthUser, UserRole } from "@/types";
 import { nameFromEmail } from "@/lib/auth/email";
 
@@ -10,12 +10,13 @@ function asRole(value: unknown): UserRole {
     : "student";
 }
 
-export function toAuthUser(record: UserRecord): AuthUser {
-  const email = record.email ?? "";
+export async function toAuthUser(user: User): Promise<AuthUser> {
+  const token = await user.getIdTokenResult();
+  const email = user.email ?? "";
   return {
-    id: record.uid,
-    name: record.displayName || nameFromEmail(email),
+    id: user.uid,
+    name: user.displayName || nameFromEmail(email),
     email,
-    role: asRole(record.customClaims?.role),
+    role: asRole(token.claims.role),
   };
 }

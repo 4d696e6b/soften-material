@@ -1,20 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { sendEmailVerification } from "firebase/auth";
+import { getFirebaseAuth } from "@/lib/firebase";
 
 export default function ResendButton() {
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
 
   async function handleResend() {
     if (status === "loading") return;
-    setStatus("loading");
+    const user = getFirebaseAuth().currentUser;
+    if (!user) {
+      setStatus("error");
+      return;
+    }
 
+    setStatus("loading");
     try {
-      const res = await fetch("/api/auth/resend-verification", { method: "POST" });
-      if (!res.ok) {
-        setStatus("error");
-        return;
-      }
+      await sendEmailVerification(user);
       setStatus("sent");
     } catch {
       setStatus("error");
@@ -49,7 +52,7 @@ export default function ResendButton() {
       )}
       {status === "error" && (
         <p className="mt-3 text-xs" style={{ color: "var(--color-error)" }}>
-          ส่งซ้ำไม่ได้ กรุณารอสักครู่
+          ส่งซ้ำไม่ได้ กรุณาเข้าสู่ระบบแล้วลองอีกครั้ง
         </p>
       )}
     </div>

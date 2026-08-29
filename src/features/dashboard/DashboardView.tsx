@@ -9,12 +9,16 @@
    3. Status cards: บอกสถานะ Phase ต่าง ๆ
    4. Coming soon: บอกว่าฟีเจอร์ถัดไปกำลังมา
 
-   ดึงผู้ใช้จาก GET /api/auth/me
+   ผู้ใช้มาจาก Firebase Auth
    ============================================================ */
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
 import TULogo from "@/components/ui/TULogo";
+import { useAuth } from "@/context/AuthProvider";
+import { toAuthUser } from "@/lib/auth/user";
+import { getFirebaseAuth } from "@/lib/firebase";
 import type { AuthUser } from "@/types";
 
 /* ---- Phase roadmap สำหรับแสดงใน dashboard ---- */
@@ -63,38 +67,31 @@ function roleLabel(role: AuthUser["role"]) {
 
 export default function DashboardView() {
   const router = useRouter();
+  const { firebaseUser, loading } = useAuth();
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadUser() {
-      const res = await fetch("/api/auth/me");
-      if (res.status === 401) {
-        router.replace("/login");
-        return;
-      }
-      if (res.status === 403) {
-        router.replace("/verify-email");
-        return;
-      }
-      if (!res.ok) {
-        router.replace("/login");
-        return;
-      }
-
-      const data = (await res.json()) as { user: AuthUser };
-      if (!cancelled) setUser(data.user);
+    if (loading) return;
+    if (!firebaseUser) {
+      router.replace("/login");
+      return;
+    }
+    if (!firebaseUser.emailVerified) {
+      router.replace("/verify-email");
+      return;
     }
 
-    loadUser();
+    let cancelled = false;
+    toAuthUser(firebaseUser).then((mapped) => {
+      if (!cancelled) setUser(mapped);
+    });
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [firebaseUser, loading, router]);
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await signOut(getFirebaseAuth());
     router.push("/login");
   }
 
