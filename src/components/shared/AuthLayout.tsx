@@ -30,7 +30,7 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
     <div className="min-h-dvh flex">
 
       <div
-        className="hidden lg:flex lg:w-[480px] xl:w-[560px] shrink-0 flex-col justify-between p-12 relative overflow-hidden"
+        className="hidden lg:flex lg:w-120 xl:w-140 shrink-0 flex-col justify-between p-12 relative overflow-hidden"
         style={{ background: "var(--color-tu-yellow)" }}
       >
         {/* Decoration: วงกลมซ้อนกัน */}
