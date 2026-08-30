@@ -1,6 +1,7 @@
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
+import Providers from "@/app/providers";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-sans-thai",
@@ -37,7 +38,9 @@ export default function RootLayout({
           fontFamily: "var(--font-sans)",
         }}
       >
-        <main className="flex flex-1 flex-col">{children}</main>
+        <main className="flex flex-1 flex-col">
+          <Providers>{children}</Providers>
+        </main>
       </body>
     </html>
   );
