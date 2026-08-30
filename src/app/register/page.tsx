@@ -11,7 +11,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="สมัครสมาชิก"
-      subtitle="ใช้ได้เฉพาะอีเมล @dome.tu.ac.th และต้องยืนยันอีเมลก่อนเข้าคลัง"
+      subtitle="ชั่วคราว: สมัครด้วยอีเมลใดก็ได้เพื่อทดสอบยืนยันเมล"
     >
       <RegisterForm />
     </AuthLayout>

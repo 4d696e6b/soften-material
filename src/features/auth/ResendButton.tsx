@@ -1,26 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { sendEmailVerification } from "firebase/auth";
-import { getFirebaseAuth } from "@/lib/firebase";
+import { FirebaseError } from "firebase/app";
+import { sendAppVerificationEmail } from "@/lib/auth/verification";
+import { getFirebaseAuth, firebaseAuthMessage } from "@/lib/firebase";
 
 export default function ResendButton() {
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
+  const [message, setMessage] = useState<string>();
 
   async function handleResend() {
     if (status === "loading") return;
     const user = getFirebaseAuth().currentUser;
     if (!user) {
       setStatus("error");
+      setMessage("กรุณาเข้าสู่ระบบก่อน แล้วกดส่งอีกครั้ง");
       return;
     }
 
     setStatus("loading");
+    setMessage(undefined);
     try {
-      await sendEmailVerification(user);
+      await sendAppVerificationEmail(user);
       setStatus("sent");
-    } catch {
+    } catch (error) {
+      const code = error instanceof FirebaseError ? error.code : "";
       setStatus("error");
+      setMessage(firebaseAuthMessage(code));
     }
   }
 
@@ -47,12 +53,12 @@ export default function ResendButton() {
       </button>
       {status === "sent" && (
         <p className="mt-3 text-xs" style={{ color: "var(--color-text-muted)" }}>
-          ส่งอีเมลยืนยันแล้ว ตรวจสอบ inbox อีกครั้ง
+          ส่งแล้ว ตรวจ inbox และโฟลเดอร์สแปม จาก noreply@ โปรเจกต์ Firebase
         </p>
       )}
       {status === "error" && (
         <p className="mt-3 text-xs" style={{ color: "var(--color-error)" }}>
-          ส่งซ้ำไม่ได้ กรุณาเข้าสู่ระบบแล้วลองอีกครั้ง
+          {message ?? "ส่งซ้ำไม่ได้ กรุณาลองใหม่"}
         </p>
       )}
     </div>

@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FirebaseError } from "firebase/app";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { EMAIL_DOMAIN, MIN_PASSWORD_LENGTH } from "@/lib/auth/constants";
-import { isTuEmail, normalizeEmail } from "@/lib/auth/email";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { ALLOW_ANY_EMAIL, EMAIL_DOMAIN, MIN_PASSWORD_LENGTH } from "@/lib/auth/constants";
+import { isTuEmail, isValidEmail, normalizeEmail } from "@/lib/auth/email";
+import { sendAppVerificationEmail } from "@/lib/auth/verification";
 import { getFirebaseAuth, firebaseAuthMessage } from "@/lib/firebase";
 
 interface FormValues {
@@ -26,9 +27,11 @@ function validate(values: FormValues): FormErrors {
 
   if (!email) {
     errors.email = "กรุณากรอกอีเมล";
+  } else if (ALLOW_ANY_EMAIL) {
+    if (!isValidEmail(email)) errors.email = "รูปแบบอีเมลไม่ถูกต้อง";
   } else if (!email.endsWith(EMAIL_DOMAIN)) {
     errors.email = `อนุญาตเฉพาะอีเมล ${EMAIL_DOMAIN} เท่านั้น`;
-  } else if (!/^[a-zA-Z0-9._%+-]+@dome\.tu\.ac\.th$/.test(email)) {
+  } else if (!isTuEmail(email)) {
     errors.email = "รูปแบบอีเมลไม่ถูกต้อง";
   }
 
@@ -67,7 +70,7 @@ export default function RegisterForm() {
     setErrors({});
 
     const email = normalizeEmail(values.email);
-    if (!isTuEmail(email)) {
+    if (!ALLOW_ANY_EMAIL && !isTuEmail(email)) {
       setErrors({ form: "อนุญาตเฉพาะอีเมล @dome.tu.ac.th เท่านั้น" });
       setIsLoading(false);
       return;
@@ -79,7 +82,11 @@ export default function RegisterForm() {
         email,
         values.password,
       );
-      await sendEmailVerification(credential.user);
+      try {
+        await sendAppVerificationEmail(credential.user);
+      } catch {
+        // Account exists; let them resend from /verify-email.
+      }
       router.push("/verify-email");
     } catch (error) {
       const code = error instanceof FirebaseError ? error.code : "";
@@ -122,7 +129,7 @@ export default function RegisterForm() {
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
-          placeholder="someone@dome.tu.ac.th"
+          placeholder={ALLOW_ANY_EMAIL ? "you@gmail.com" : "someone@dome.tu.ac.th"}
           value={values.email}
           onChange={handleChange}
           disabled={isLoading}
@@ -130,7 +137,10 @@ export default function RegisterForm() {
           aria-invalid={!!errors.email}
         />
         <p className="mt-1.5 text-xs" style={{ color: errors.email ? "var(--color-error)" : "var(--color-text-muted)" }}>
-          {errors.email ?? "สมัครได้เฉพาะอีเมล @dome.tu.ac.th"}
+          {errors.email ??
+            (ALLOW_ANY_EMAIL
+              ? "ชั่วคราว: สมัครด้วยอีเมลใดก็ได้เพื่อทดสอบยืนยันเมล"
+              : "สมัครได้เฉพาะอีเมล @dome.tu.ac.th")}
         </p>
       </div>
 

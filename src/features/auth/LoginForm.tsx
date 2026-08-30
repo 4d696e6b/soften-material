@@ -18,7 +18,8 @@ import Link from "next/link";
 import { FirebaseError } from "firebase/app";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { getFirebaseAuth, firebaseAuthMessage } from "@/lib/firebase";
-import { isTuEmail, normalizeEmail } from "@/lib/auth/email";
+import { ALLOW_ANY_EMAIL, EMAIL_DOMAIN, MIN_PASSWORD_LENGTH } from "@/lib/auth/constants";
+import { isTuEmail, isValidEmail, normalizeEmail } from "@/lib/auth/email";
 
 /* ---- Types ---- */
 interface FormValues {
@@ -32,25 +33,24 @@ interface FormErrors {
   form?: string;
 }
 
-const EMAIL_DOMAIN = "@dome.tu.ac.th";
-
-/* ---- Validate ก่อน submit ---- */
 function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {};
 
   const email = values.email.trim().toLowerCase();
   if (!email) {
     errors.email = "กรุณากรอกอีเมล";
+  } else if (ALLOW_ANY_EMAIL) {
+    if (!isValidEmail(email)) errors.email = "รูปแบบอีเมลไม่ถูกต้อง";
   } else if (!email.endsWith(EMAIL_DOMAIN)) {
     errors.email = `อีเมลต้องลงท้ายด้วย ${EMAIL_DOMAIN}`;
-  } else if (!/^[a-zA-Z0-9._%+-]+@dome\.tu\.ac\.th$/.test(email)) {
+  } else if (!isTuEmail(email)) {
     errors.email = "รูปแบบอีเมลไม่ถูกต้อง";
   }
 
   if (!values.password) {
     errors.password = "กรุณากรอกรหัสผ่าน";
-  } else if (values.password.length < 8) {
-    errors.password = "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
+  } else if (values.password.length < MIN_PASSWORD_LENGTH) {
+    errors.password = `รหัสผ่านต้องมีอย่างน้อย ${MIN_PASSWORD_LENGTH} ตัวอักษร`;
   }
 
   return errors;
@@ -86,7 +86,7 @@ export default function LoginForm() {
     setErrors({});
 
     const email = normalizeEmail(values.email);
-    if (!isTuEmail(email)) {
+    if (!ALLOW_ANY_EMAIL && !isTuEmail(email)) {
       setErrors({ form: "อนุญาตเฉพาะอีเมล @dome.tu.ac.th เท่านั้น" });
       setIsLoading(false);
       return;
@@ -157,7 +157,7 @@ export default function LoginForm() {
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
-          placeholder="demo@dome.tu.ac.th"
+          placeholder={ALLOW_ANY_EMAIL ? "you@gmail.com" : "demo@dome.tu.ac.th"}
           value={values.email}
           onChange={handleChange}
           disabled={isLoading}
@@ -172,7 +172,9 @@ export default function LoginForm() {
           </p>
         ) : (
           <p id="email-hint" className="mt-1.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
-            ใช้อีเมลโดเมน @dome.tu.ac.th เท่านั้น
+            {ALLOW_ANY_EMAIL
+              ? "ชั่วคราว: เข้าสู่ระบบด้วยอีเมลใดก็ได้เพื่อทดสอบ"
+              : "ใช้อีเมลโดเมน @dome.tu.ac.th เท่านั้น"}
           </p>
         )}
       </div>

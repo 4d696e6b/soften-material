@@ -1,4 +1,4 @@
-import { EMAIL_DOMAIN, EMAIL_PATTERN } from "@/lib/auth/constants";
+import { ANY_EMAIL_PATTERN, EMAIL_DOMAIN, EMAIL_PATTERN } from "@/lib/auth/constants";
 
 export function normalizeEmail(email: unknown): string {
   if (typeof email !== "string") return "";
@@ -7,6 +7,10 @@ export function normalizeEmail(email: unknown): string {
 
 export function isTuEmail(email: string): boolean {
   return email.endsWith(EMAIL_DOMAIN) && EMAIL_PATTERN.test(email);
+}
+
+export function isValidEmail(email: string): boolean {
+  return ANY_EMAIL_PATTERN.test(email);
 }
 
 export function nameFromEmail(email: string): string {

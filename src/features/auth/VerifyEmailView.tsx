@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { applyActionCode } from "firebase/auth";
 import ResendButton from "@/features/auth/ResendButton";
+import { useAuth } from "@/context/AuthProvider";
 import { getFirebaseAuth } from "@/lib/firebase";
 
 type Status = "pending" | "verifying" | "verified" | "invalid";
@@ -12,6 +13,7 @@ type Status = "pending" | "verifying" | "verified" | "invalid";
 export default function VerifyEmailView() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { firebaseUser } = useAuth();
   const oobCode = searchParams.get("oobCode") ?? searchParams.get("token") ?? "";
   const [status, setStatus] = useState<Status>(oobCode ? "verifying" : "pending");
 
@@ -89,8 +91,17 @@ export default function VerifyEmailView() {
           <p className="mb-1 text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
             กรุณายืนยันอีเมล
           </p>
-          <p className="mb-6 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            กดลิงก์ในอีเมล @dome.tu.ac.th ก่อนเข้าใช้งานคลัง
+          <p className="mb-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+            ส่งลิงก์ไปที่
+          </p>
+          <p
+            className="mb-4 text-sm font-medium break-all"
+            style={{ color: "var(--color-text-primary)", fontFamily: "monospace" }}
+          >
+            {firebaseUser?.email ?? "@dome.tu.ac.th"}
+          </p>
+          <p className="mb-6 text-xs" style={{ color: "var(--color-text-muted)" }}>
+            มธ. มักกรองเมลจาก Firebase ไว้ในสแปม หรือบล็อก — ตรวจทั้งสองที่ แล้วกดส่งอีกครั้ง
           </p>
           <ResendButton />
           <div className="mt-5">

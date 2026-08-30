@@ -24,7 +24,7 @@ export default function LoginPage() {
   return (
     <AuthLayout
       title="เข้าสู่ระบบ"
-      subtitle="ใช้อีเมล @dome.tu.ac.th ที่ยืนยันแล้วเท่านั้น"
+      subtitle="ชั่วคราว: เข้าสู่ระบบด้วยอีเมลใดก็ได้เพื่อทดสอบ"
     >
       <LoginForm />
     </AuthLayout>
