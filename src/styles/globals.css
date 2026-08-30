@@ -1,25 +1,254 @@
+/* ============================================================
+   globals.css — Design System สำหรับ Soften Material
+   ธีม: Thammasat Software Engineering · Light White Theme
+   ============================================================ */
+
 @import "tailwindcss";
 
+/* ============================================================
+   CSS Custom Properties (Design Tokens)
+   - ธีมสว่าง (white/light) พื้นหลักขาว
+   - สีหลักของ Thammasat: เหลือง (#F5C518) และแดง (#C8102E)
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* สีพื้นหลัง */
+  --color-bg-primary: #ffffff;
+  /* พื้นหลังหลัก — ขาว */
+  --color-bg-secondary: #f8f8f8;
+  /* พื้นหลังรอง */
+  --color-bg-card: #ffffff;
+  /* พื้นหลังการ์ด */
+  --color-bg-input: #fafafa;
+  /* พื้นหลัง input */
+  --color-bg-page: #f4f4f4;
+  /* พื้นหลังหน้า (นอก card) */
+
+  /* สี Thammasat */
+  --color-tu-yellow: #E8A900;
+  /* เหลือง TU (เข้มขึ้นบน white bg) */
+  --color-tu-yellow-light: #FDF3D0;
+  /* เหลืองจาง — สำหรับ bg accent */
+  --color-tu-yellow-dim: #c7920a;
+  /* เหลือง TU hover */
+  --color-tu-yellow-glow: rgba(232, 169, 0, 0.1);
+  --color-tu-red: #C8102E;
+  /* แดง TU */
+  --color-tu-red-dim: #a00d24;
+
+  /* สีตัวอักษร */
+  --color-text-primary: #111111;
+  /* ข้อความหลัก */
+  --color-text-secondary: #555555;
+  /* ข้อความรอง */
+  --color-text-muted: #999999;
+  /* ข้อความจาง */
+  --color-text-placeholder: #bbbbbb;
+
+  /* เส้นขอบ */
+  --color-border: #e5e5e5;
+  /* เส้นขอบทั่วไป */
+  --color-border-hover: #cccccc;
+  --color-border-focus: #E8A900;
+  /* เส้นขอบตอน focus (เหลือง) */
+
+  /* สถานะ error */
+  --color-error: #dc2626;
+  --color-error-bg: #fef2f2;
+  --color-error-border: rgba(220, 38, 38, 0.25);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Shadows — เบาสำหรับ light theme */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--color-border);
+  --shadow-focus: 0 0 0 3px rgba(232, 169, 0, 0.18);
+  --shadow-focus-error: 0 0 0 3px rgba(220, 38, 38, 0.12);
 }
 
+/* ============================================================
+   Tailwind v4 Theme Override
+   ============================================================ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--color-bg-page);
+  --color-foreground: var(--color-text-primary);
+  --color-tu-yellow: var(--color-tu-yellow);
+  --color-tu-red: var(--color-tu-red);
+  --color-card: var(--color-bg-card);
+  --color-border-default: var(--color-border);
+
+  /* Noto Sans Thai เป็น font หลัก */
+  --font-sans: "Noto Sans Thai", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Noto Sans Mono", ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================================================
+   Base Styles
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--color-bg-page);
+  color: var(--color-text-primary);
+  min-height: 100dvh;
+}
+
+/* ============================================================
+   Auth Form Components
+   ============================================================ */
+
+/* Input field สำหรับ auth */
+.auth-input {
+  width: 100%;
+  background-color: var(--color-bg-input);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+  padding: 0.7rem 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.auth-input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.auth-input:hover:not(:focus):not(:disabled) {
+  border-color: var(--color-border-hover);
+  background-color: #ffffff;
+}
+
+.auth-input:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus);
+  background-color: #ffffff;
+}
+
+.auth-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Input error state */
+.auth-input.error {
+  border-color: var(--color-error);
+  box-shadow: var(--shadow-focus-error);
+}
+
+/* Email input ที่มี suffix (@dome.tu.ac.th) */
+.auth-input-email {
+  width: 100%;
+  background-color: var(--color-bg-input);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  outline: none;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.auth-input-email:hover:not(:focus-within):not(:has(input:disabled)) {
+  border-color: var(--color-border-hover);
+  background-color: #ffffff;
+}
+
+.auth-input-email:focus-within {
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus);
+  background-color: #ffffff;
+}
+
+.auth-input-email.error {
+  border-color: var(--color-error);
+  box-shadow: var(--shadow-focus-error);
+}
+
+.auth-input-email input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+  padding: 0.7rem 0 0.7rem 1rem;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.auth-input-email input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+/* ปุ่มหลัก (เหลือง TU) */
+.btn-primary {
+  width: 100%;
+  background-color: var(--color-tu-yellow);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  font-family: inherit;
+  transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-tu-yellow-dim);
+  box-shadow: 0 2px 8px rgba(232, 169, 0, 0.3);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Animations
+   ============================================================ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.35s ease forwards;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 0.8s linear infinite;
 }
