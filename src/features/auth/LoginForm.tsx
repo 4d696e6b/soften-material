@@ -3,25 +3,20 @@
 /* ============================================================
    LoginForm.tsx — ฟอร์มเข้าสู่ระบบ
 
-   Mockup credentials (ใช้ระหว่างพัฒนา frontend):
-     Email    : demo@dome.tu.ac.th
-     Password : password123
-   เมื่อ backend พร้อม → ลบ MOCK_USER ออกแล้วเชื่อม API จริง
+   Mock credentials:
+     student@dome.tu.ac.th  → Student
+     con@dome.tu.ac.th      → Contributor
+     mod@dome.tu.ac.th      → Moderator
+     admin@dome.tu.ac.th    → Admin
+     Password ทุกคน: password123
 
-   Fields:
-   1. อีเมล @dome.tu.ac.th (type="email", full address)
-   2. รหัสผ่าน พร้อมปุ่มแสดง/ซ่อน
-   3. ลิงก์ "ลืมรหัสผ่าน?"
-   4. ปุ่ม "เข้าสู่ระบบ"
-
-   หมายเหตุ backend:
-   - ส่ง email เต็ม เช่น demo@dome.tu.ac.th ไปที่ API
-   - Server ต้อง validate domain ด้วย (ไม่ trust UI เท่านั้น)
+   เมื่อ backend พร้อม → ลบ useAuth mock แล้วเชื่อม API จริง
    ============================================================ */
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 /* ---- Types ---- */
 interface FormValues {
@@ -36,12 +31,6 @@ interface FormErrors {
 }
 
 const EMAIL_DOMAIN = "@dome.tu.ac.th";
-
-/* ---- Mockup user สำหรับ frontend dev (ลบออกเมื่อ backend พร้อม) ---- */
-const MOCK_USER = {
-  email: "demo@dome.tu.ac.th",
-  password: "password123",
-};
 
 /* ---- Validate ก่อน submit ---- */
 function validate(values: FormValues): FormErrors {
@@ -68,6 +57,7 @@ function validate(values: FormValues): FormErrors {
 /* ---- Main Component ---- */
 export default function LoginForm() {
   const router = useRouter();
+  const { login } = useAuth();
 
   /* State ของ form */
   const [values, setValues] = useState<FormValues>({ email: "", password: "" });
@@ -98,20 +88,13 @@ export default function LoginForm() {
 
     const email = values.email.trim().toLowerCase();
 
-    /* ============================================================
-       MOCKUP LOGIN — ใช้ระหว่างพัฒนา frontend
-       เปรียบเทียบกับ MOCK_USER แทน API จริง
+    /* Login ผ่าน AuthContext (mock) */
+    const result = login(email, values.password);
 
-       TODO (Backend): ลบ block นี้ทิ้ง แล้วแทนด้วย:
-         fetch("/api/auth/login", { method: "POST", ... })
-       ดูรายละเอียดใน backend_readme.txt หัวข้อ 7 Step 1
-       ============================================================ */
-    if (email === MOCK_USER.email && values.password === MOCK_USER.password) {
-      /* ถูกต้อง → ไปหน้า dashboard */
+    if (result.success) {
       router.push("/dashboard");
     } else {
-      /* ผิด → แสดง error */
-      setErrors({ form: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+      setErrors({ form: result.error || "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
       setIsLoading(false);
     }
   }
@@ -140,7 +123,6 @@ export default function LoginForm() {
 
       {/* ============================================================
           Field 1: อีเมล @dome.tu.ac.th
-          placeholder บอก format ชัดเจน เช่น demo@dome.tu.ac.th
           ============================================================ */}
       <div className="mb-4">
         <label
@@ -160,7 +142,7 @@ export default function LoginForm() {
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
-          placeholder="demo@dome.tu.ac.th"
+          placeholder="student@dome.tu.ac.th"
           value={values.email}
           onChange={handleChange}
           disabled={isLoading}
@@ -217,14 +199,12 @@ export default function LoginForm() {
             onMouseLeave={(e) => (e.currentTarget.style.color = "var(--color-text-muted)")}
             aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
           >
-            {/* Eye icon — กดเพื่อแสดงรหัสผ่าน */}
             {!showPassword ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
             ) : (
-              /* Eye-off icon — กดเพื่อซ่อนรหัสผ่าน */
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
                 <line x1="1" y1="1" x2="23" y2="23" />
@@ -240,9 +220,7 @@ export default function LoginForm() {
         )}
       </div>
 
-      {/* ============================================================
-          ลิงก์ "ลืมรหัสผ่าน?" — ขวาล่างของ password field
-          ============================================================ */}
+      {/* ลิงก์ "ลืมรหัสผ่าน?" */}
       <div className="mb-6 flex justify-end">
         <Link
           href="/forgot-password"
@@ -255,10 +233,7 @@ export default function LoginForm() {
         </Link>
       </div>
 
-      {/* ============================================================
-          ปุ่มเข้าสู่ระบบ
-          - disabled ระหว่าง submit เพื่อกัน double submit
-          ============================================================ */}
+      {/* ปุ่มเข้าสู่ระบบ */}
       <button
         type="submit"
         disabled={isLoading}
@@ -278,6 +253,26 @@ export default function LoginForm() {
           "เข้าสู่ระบบ"
         )}
       </button>
+
+      {/* ---- Mock credentials hint ---- */}
+      <div
+        className="mt-5 rounded-sm p-3 text-xs"
+        style={{
+          background: "var(--color-bg-secondary)",
+          border: "1px solid var(--color-border)",
+          color: "var(--color-text-muted)",
+        }}
+      >
+        <p className="font-semibold mb-1.5" style={{ color: "var(--color-text-secondary)" }}>
+          ทดสอบ Login (รหัสผ่าน: password123)
+        </p>
+        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5" style={{ fontFamily: "monospace" }}>
+          <span>student@dome.tu.ac.th</span><span className="text-right">Student</span>
+          <span>con@dome.tu.ac.th</span><span className="text-right">Contributor</span>
+          <span>mod@dome.tu.ac.th</span><span className="text-right">Moderator</span>
+          <span>admin@dome.tu.ac.th</span><span className="text-right">Admin</span>
+        </div>
+      </div>
 
     </form>
   );

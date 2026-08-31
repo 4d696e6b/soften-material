@@ -6,11 +6,14 @@
    ============================================================ */
 
 import Link from "next/link";
-import { MOCK_CURRENT_USER, MOCK_USERS, MOCK_COURSES } from "@/lib/mock-data";
+import { useAuth } from "@/context/AuthContext";
+import { MOCK_USERS, MOCK_COURSES } from "@/lib/mock-data";
 import AccessDenied from "@/components/shared/AccessDenied";
 
 export default function AdminDashboard() {
-  const user = MOCK_CURRENT_USER;
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   /* Route protection: ต้องเป็น admin เท่านั้น */
   if (user.role !== "admin" && user.role !== "moderator") {

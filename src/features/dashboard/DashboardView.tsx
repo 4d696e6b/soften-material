@@ -12,7 +12,7 @@
    ============================================================ */
 
 import Link from "next/link";
-import { MOCK_CURRENT_USER } from "@/lib/mock-data";
+import { useAuth } from "@/context/AuthContext";
 
 /* ---- Phase roadmap สำหรับแสดงใน dashboard ---- */
 const PHASES = [
@@ -82,7 +82,9 @@ const QUICK_LINKS = [
 ];
 
 export default function DashboardView() {
-  const user = MOCK_CURRENT_USER;
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   return (
     <div className="w-full max-w-4xl mx-auto px-5 py-8 sm:px-8">

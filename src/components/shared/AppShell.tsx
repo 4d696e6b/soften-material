@@ -15,11 +15,11 @@
    Mobile: Topbar + hamburger → sidebar drawer overlay
    ============================================================ */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import TULogo from "@/components/ui/TULogo";
-import { MOCK_CURRENT_USER } from "@/lib/mock-data";
+import { useAuth } from "@/context/AuthContext";
 import { ROLE_LABELS_EN } from "@/types";
 import type { UserRole } from "@/types";
 
@@ -119,13 +119,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
 
-  const user = MOCK_CURRENT_USER;
+  /* Redirect to login if not authenticated */
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
 
   function handleLogout() {
-    /* TODO (Backend): fetch /api/auth/logout */
+    logout();
     router.push("/login");
   }
+
+  /* ยังไม่มี user → ไม่ render อะไร (กำลัง redirect) */
+  if (!user) return null;
 
   function isActive(href: string): boolean {
     if (href === "/dashboard") return pathname === "/dashboard";

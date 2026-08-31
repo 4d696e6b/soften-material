@@ -4,12 +4,14 @@
    AdminUsersView.tsx — Wrapper สำหรับ User Management + role check
    ============================================================ */
 
-import { MOCK_CURRENT_USER } from "@/lib/mock-data";
+import { useAuth } from "@/context/AuthContext";
 import AccessDenied from "@/components/shared/AccessDenied";
 import UserManagement from "./UserManagement";
 
 export default function AdminUsersView() {
-  const user = MOCK_CURRENT_USER;
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   if (user.role !== "admin" && user.role !== "moderator") {
     return <AccessDenied />;
