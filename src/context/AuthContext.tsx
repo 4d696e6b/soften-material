@@ -4,18 +4,18 @@
    AuthContext.tsx — จัดการสถานะ login/logout (Mock)
 
    Mock users:
-     student@dome.tu.ac.th  → Student
-     con@dome.tu.ac.th      → Contributor
-     mod@dome.tu.ac.th      → Moderator
-     admin@dome.tu.ac.th    → Admin
+     student@dome.tu.ac.th  → Student (นักศึกษา)
+     con@dome.tu.ac.th      → Contributor (ผู้ส่งเอกสาร)
+     mod@dome.tu.ac.th      → Moderator (ผู้ตรวจเนื้อหา)
+     admin@dome.tu.ac.th    → Admin (ผู้ดูแลระบบ)
 
    ทุกคนใช้ password: password123
 
-   ลบออกเมื่อ backend พร้อม → แทนด้วย session จริง
+   เมื่อ backend Firebase พร้อม → แทนด้วย Firebase Auth
    ============================================================ */
 
-import { createContext, useContext, useState, useCallback } from "react";
-import type { User } from "@/types";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import type { User, UserRole } from "@/types";
 
 /* ---- Mock users ---- */
 const MOCK_ACCOUNTS: { email: string; password: string; user: User }[] = [
@@ -27,7 +27,7 @@ const MOCK_ACCOUNTS: { email: string; password: string; user: User }[] = [
       name: "นักศึกษา ทดสอบ",
       email: "student@dome.tu.ac.th",
       role: "student",
-      initial: "น",
+      initial: "ST",
       emailVerified: true,
       createdAt: "2026-08-01T00:00:00Z",
     },
@@ -40,7 +40,7 @@ const MOCK_ACCOUNTS: { email: string; password: string; user: User }[] = [
       name: "ผู้ส่งเอกสาร ทดสอบ",
       email: "con@dome.tu.ac.th",
       role: "contributor",
-      initial: "ผ",
+      initial: "CB",
       emailVerified: true,
       createdAt: "2026-08-05T00:00:00Z",
     },
@@ -50,10 +50,10 @@ const MOCK_ACCOUNTS: { email: string; password: string; user: User }[] = [
     password: "password123",
     user: {
       id: "u-003",
-      name: "ผู้ดูแล ทดสอบ",
+      name: "ผู้ตรวจเนื้อหา ทดสอบ",
       email: "mod@dome.tu.ac.th",
       role: "moderator",
-      initial: "ด",
+      initial: "MD",
       emailVerified: true,
       createdAt: "2026-08-10T00:00:00Z",
     },
@@ -66,7 +66,7 @@ const MOCK_ACCOUNTS: { email: string; password: string; user: User }[] = [
       name: "ผู้ดูแลระบบ ทดสอบ",
       email: "admin@dome.tu.ac.th",
       role: "admin",
-      initial: "A",
+      initial: "AD",
       emailVerified: true,
       createdAt: "2026-08-01T00:00:00Z",
     },
@@ -76,28 +76,43 @@ const MOCK_ACCOUNTS: { email: string; password: string; user: User }[] = [
 /* ---- Context type ---- */
 interface AuthContextType {
   user: User | null;
+  isInitialized: boolean;
   login: (email: string, password: string) => { success: boolean; error?: string };
+  loginAsRole: (role: UserRole) => { success: boolean };
   logout: () => void;
+  mockAccounts: typeof MOCK_ACCOUNTS;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  isInitialized: false,
   login: () => ({ success: false }),
+  loginAsRole: () => ({ success: false }),
   logout: () => {},
+  mockAccounts: MOCK_ACCOUNTS,
 });
+
+const STORAGE_KEY = "soften_user";
 
 /* ---- Provider ---- */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    /* Restore from sessionStorage if available */
-    if (typeof window === "undefined") return null;
+  const [user, setUser] = useState<User | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  /* Restore from localStorage/sessionStorage on client mount */
+  useEffect(() => {
     try {
-      const stored = sessionStorage.getItem("soften_user");
-      return stored ? JSON.parse(stored) : null;
+      const stored = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+      }
     } catch {
-      return null;
+      /* ignore parsing error */
+    } finally {
+      setIsInitialized(true);
     }
-  });
+  }, []);
 
   const login = useCallback((email: string, password: string) => {
     const normalized = email.trim().toLowerCase();
@@ -118,8 +133,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setUser(account.user);
     try {
-      sessionStorage.setItem("soften_user", JSON.stringify(account.user));
-    } catch { /* ignore */ }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(account.user));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(account.user));
+    } catch {
+      /* ignore storage error */
+    }
+
+    return { success: true };
+  }, []);
+
+  const loginAsRole = useCallback((role: UserRole) => {
+    const account = MOCK_ACCOUNTS.find((a) => a.user.role === role);
+    if (!account) return { success: false };
+
+    setUser(account.user);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(account.user));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(account.user));
+    } catch {
+      /* ignore storage error */
+    }
 
     return { success: true };
   }, []);
@@ -127,12 +160,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     try {
-      sessionStorage.removeItem("soften_user");
-    } catch { /* ignore */ }
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore storage error */
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isInitialized,
+        login,
+        loginAsRole,
+        logout,
+        mockAccounts: MOCK_ACCOUNTS,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -143,5 +188,4 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-/* ---- Export mock accounts for display ---- */
 export { MOCK_ACCOUNTS };

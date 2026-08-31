@@ -1,18 +1,19 @@
 "use client";
 
 /* ============================================================
-   DashboardView.tsx — หน้า Landing หลังเข้าสู่ระบบ (Phase 2)
-
-   ประกอบด้วย:
-   1. Hero section: ทักทายผู้ใช้
-   2. Quick links: ลิงก์เร็วไปหน้าสำคัญ
-   3. Status cards: บอกสถานะ Phase ต่าง ๆ
-
-   Topbar และ Sidebar ย้ายไป AppShell.tsx แล้ว
+   DashboardView.tsx — หน้า Landing / Home หลังเข้าสู่ระบบ (Phase 2)
+   
+   ปรับแต่งเนื้อหาหน้าหลักแยกตามบทบาท (Role-Specific Home):
+   - Student     : ค้นหาเอกสาร, ลิงก์วิชาตามชั้นปี, ดูวิชาทั้งหมด
+   - Contributor : อัปโหลดฉบับร่าง, สถิติการส่งไฟล์, แนวทางการแชร์
+   - Moderator   : คิวรอตรวจสอบ, ตรวจสอบเนื้อหา, กฎการอนุมัติ
+   - Admin       : สถิติระบบรวม, จัดการผู้ใช้, จัดการรายวิชา
    ============================================================ */
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { ROLE_LABELS, ROLE_LABELS_EN } from "@/types";
+import { MOCK_COURSES } from "@/lib/mock-data";
 
 /* ---- Phase roadmap สำหรับแสดงใน dashboard ---- */
 const PHASES = [
@@ -48,38 +49,11 @@ const PHASES = [
   },
 ];
 
-/* ---- Status badge colors ---- */
 const statusStyles: Record<"done" | "current" | "upcoming", { bg: string; text: string; dot: string; label: string }> = {
   done:     { bg: "#f0fdf4", text: "#15803d", dot: "#22c55e", label: "เสร็จแล้ว" },
   current:  { bg: "#eff6ff", text: "#2563eb", dot: "#3b82f6", label: "กำลังพัฒนา" },
   upcoming: { bg: "#fafafa", text: "#888888", dot: "#dddddd", label: "กำลังมา" },
 };
-
-/* ---- Quick Links ---- */
-const QUICK_LINKS = [
-  {
-    href: "/courses",
-    label: "รายวิชาทั้งหมด",
-    description: "ดูรายวิชา Soft-En ทุกปี",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/profile",
-    label: "โปรไฟล์ของฉัน",
-    description: "ดูข้อมูลบัญชีและบทบาท",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-    ),
-  },
-];
 
 export default function DashboardView() {
   const { user } = useAuth();
@@ -87,84 +61,217 @@ export default function DashboardView() {
   if (!user) return null;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-5 py-8 sm:px-8">
+    <div className="w-full max-w-5xl mx-auto px-5 py-8 sm:px-8">
 
-      {/* ---- Hero: ทักทาย ---- */}
-      <section className="mb-8">
-        <p
-          className="mb-2 text-xs font-medium tracking-widest uppercase"
-          style={{ color: "var(--color-tu-yellow-dim)", fontFamily: "monospace" }}
-        >
-          Software Engineering · Thammasat University
-        </p>
+      {/* ---- Hero Section: ทักทาย + แสดง Role ---- */}
+      <section className="mb-8 p-6 rounded-lg border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`role-badge role-badge--${user.role}`}>
+                {ROLE_LABELS[user.role]} ({ROLE_LABELS_EN[user.role]})
+              </span>
+              <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+                Soft-En TU
+              </span>
+            </div>
 
-        <h1
-          className="text-2xl sm:text-3xl font-bold leading-tight mb-2"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          สวัสดี, {user.name} 👋
-        </h1>
-
-        <p
-          className="text-sm leading-relaxed max-w-xl"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          ยินดีต้อนรับสู่{" "}
-          <strong style={{ color: "var(--color-text-primary)" }}>Soften Material</strong>{" "}
-          — คลังเอกสารของนักศึกษา Soft-En มธ.
-          คุณล็อกอินด้วย{" "}
-          <span
-            style={{ color: "var(--color-text-primary)", fontFamily: "monospace", fontSize: "0.8125rem" }}
-          >
-            {user.email}
-          </span>
-        </p>
-      </section>
-
-      {/* ---- Quick Links ---- */}
-      <section className="mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {QUICK_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="course-card flex items-start gap-3"
+            <h1
+              className="text-2xl sm:text-3xl font-bold leading-tight mb-2"
+              style={{ color: "var(--color-text-primary)" }}
             >
-              <div
-                className="shrink-0 mt-0.5"
-                style={{ color: "var(--color-tu-yellow)" }}
-              >
-                {link.icon}
-              </div>
-              <div>
-                <p
-                  className="font-semibold text-sm mb-0.5"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  {link.label}
-                </p>
-                <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                  {link.description}
-                </p>
-              </div>
+              ยินดีต้อนรับ, {user.name} 👋
+            </h1>
+
+            <p
+              className="text-sm leading-relaxed max-w-2xl"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              เข้าสู่ระบบด้วย{" "}
+              <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-black/5" style={{ color: "var(--color-text-primary)" }}>
+                {user.email}
+              </code>
+              {" — "}
+              {user.role === "student" && "ค้นหาและเข้าถึงเอกสารการเรียน ข้อสอบเก่า และชีทสรุปสำหรับนักศึกษา Soft-En"}
+              {user.role === "contributor" && "ร่วมแบ่งปันชีทสรุปและเอกสารการเรียนเพื่อช่วยเพื่อนๆ ในสาขา"}
+              {user.role === "moderator" && "ตรวจสอบคุณภาพและความถูกต้องของเอกสารก่อนเผยแพร่สู่คลังรวม"}
+              {user.role === "admin" && "ควบคุมดูแลระบบ จัดการสิทธิ์ผู้ใช้งาน และโครงสร้างหลักสูตรรายวิชา"}
+            </p>
+          </div>
+
+          <div className="flex sm:flex-col gap-2 shrink-0">
+            <Link href="/profile" className="btn-secondary text-xs">
+              ดูโปรไฟล์
             </Link>
-          ))}
+            <Link href="/courses" className="btn-primary text-xs text-center">
+              ดูรายวิชาทั้งหมด
+            </Link>
+          </div>
         </div>
       </section>
 
+      {/* ============================================================
+          ROLE-SPECIFIC SECTIONS
+          ============================================================ */}
+
+      {/* 1. STUDENT VIEW */}
+      {user.role === "student" && (
+        <section className="mb-8 space-y-6">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--color-text-muted)" }}>
+              เข้าถึงรายวิชาตามชั้นปี
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[1, 2, 3, 4].map((year) => {
+                const count = MOCK_COURSES.filter((c) => c.year === year).length;
+                return (
+                  <Link
+                    key={year}
+                    href="/courses"
+                    className="course-card p-4 rounded-md text-center hover:border-[var(--color-tu-yellow)]"
+                  >
+                    <p className="text-lg font-bold" style={{ color: "var(--color-tu-yellow-dim)" }}>
+                      ชั้นปีที่ {year}
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                      {count} รายวิชา
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="p-4 rounded-md border" style={{ background: "var(--color-bg-secondary)", borderColor: "var(--color-border)" }}>
+            <p className="text-xs font-semibold mb-1" style={{ color: "var(--color-text-primary)" }}>
+              💡 คำแนะนำสำหรับนักศึกษา
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+              เอกสารในระบบจะแสดงเฉพาะไฟล์ที่ผ่านการตรวจสอบ (Published) แล้วเท่านั้น หากต้องการร่วมส่งเอกสาร สามารถติดต่อ Admin เพื่อปรับสิทธิ์เป็น <strong>Contributor</strong> ได้
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* 2. CONTRIBUTOR VIEW */}
+      {user.role === "contributor" && (
+        <section className="mb-8 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 rounded-md border text-center" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+              <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>0</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>ไฟล์ที่ฉันอัปโหลด</p>
+            </div>
+            <div className="p-4 rounded-md border text-center" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+              <p className="text-2xl font-bold" style={{ color: "var(--color-info)" }}>0</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>รอตรวจสอบ (Pending)</p>
+            </div>
+            <div className="p-4 rounded-md border text-center" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+              <p className="text-2xl font-bold" style={{ color: "var(--color-success)" }}>0</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>เผยแพร่แล้ว (Published)</p>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-md border" style={{ background: "var(--color-info-bg)", borderColor: "var(--color-info-border)" }}>
+            <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--color-info)" }}>
+              🚀 ระบบอัปโหลดเอกสาร (Phase 3)
+            </h3>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--color-info)" }}>
+              ในฐานะ <strong>Contributor</strong> คุณจะสามารถอัปโหลดไฟล์ PDF ฉบับร่าง พร้อมระบุวิชาและประเภทเอกสาร (ชีทสรุป, ข้อสอบเก่า, แบบฝึกหัด) ได้ใน Phase 3
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* 3. MODERATOR VIEW */}
+      {user.role === "moderator" && (
+        <section className="mb-8 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 rounded-md border text-center" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+              <p className="text-2xl font-bold" style={{ color: "var(--color-warning)" }}>0</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>คิวรอตรวจสอบ</p>
+            </div>
+            <div className="p-4 rounded-md border text-center" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+              <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>12</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>รายวิชาในระบบ</p>
+            </div>
+            <div className="p-4 rounded-md border text-center" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+              <p className="text-2xl font-bold" style={{ color: "var(--color-success)" }}>พร้อม</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>สถานะสิทธิ์ตรวจเอกสาร</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Link href="/admin" className="btn-primary text-xs">
+              ไปยังหน้า Admin Dashboard
+            </Link>
+            <Link href="/courses" className="btn-secondary text-xs">
+              ตรวจสอบรายวิชา
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* 4. ADMIN VIEW */}
+      {user.role === "admin" && (
+        <section className="mb-8 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link href="/admin/users" className="course-card p-4 rounded-md">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--color-info)" }}>
+                จัดการผู้ใช้
+              </p>
+              <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                4 บัญชี Mock
+              </p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                กำหนด Role: Student, Contributor, Moderator, Admin
+              </p>
+            </Link>
+
+            <Link href="/admin/courses" className="course-card p-4 rounded-md">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--color-tu-yellow-dim)" }}>
+                จัดการรายวิชา
+              </p>
+              <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                12 รายวิชา
+              </p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                เพิ่ม / แก้ไข / ลบ รายวิชา Soft-En
+              </p>
+            </Link>
+
+            <Link href="/admin" className="course-card p-4 rounded-md">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--color-success)" }}>
+                ภาพรวมระบบ
+              </p>
+              <p className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                Admin Overview
+              </p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                สถิติและสถานะการเข้าถึง
+              </p>
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* ---- Divider ---- */}
-      <div className="mb-6 h-px" style={{ background: "var(--color-border)" }} />
+      <div className="mb-8 h-px" style={{ background: "var(--color-border)" }} />
 
-      {/* ---- Phase Status Cards ---- */}
+      {/* ---- Roadmap Status ---- */}
       <section>
-        <h2
-          className="mb-4 text-xs font-semibold uppercase tracking-wider"
-          style={{ color: "var(--color-text-muted)", fontFamily: "monospace" }}
-        >
-          Roadmap การพัฒนา
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ color: "var(--color-text-muted)", fontFamily: "monospace" }}
+          >
+            Roadmap การพัฒนาระบบ
+          </h2>
+          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            สเปก: docs/soften-material-dev-spec.th.md
+          </span>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {PHASES.map((p) => {
             const s = statusStyles[p.status];
             return (
@@ -212,31 +319,6 @@ export default function DashboardView() {
           })}
         </div>
       </section>
-
-      {/* ---- Phase 2 notice ---- */}
-      <div
-        className="mt-6 rounded-md px-4 py-3 flex items-start gap-3"
-        style={{
-          background: "var(--color-info-bg)",
-          border: "1px solid var(--color-info-border)",
-        }}
-      >
-        <svg
-          className="shrink-0 mt-0.5"
-          width="16" height="16" viewBox="0 0 24 24"
-          fill="none" stroke="var(--color-info)"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        <p className="text-sm" style={{ color: "var(--color-info)" }}>
-          <strong>Phase 2 กำลังพัฒนา</strong> — ระบบรายวิชาและบทบาทพร้อมแล้ว
-          คลังไฟล์ PDF จะเปิดให้ใช้งานใน Phase 3
-        </p>
-      </div>
     </div>
   );
 }
