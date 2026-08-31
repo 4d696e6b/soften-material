@@ -5,11 +5,13 @@
    แสดงข้อมูลบัญชี, บทบาท, สถานะอีเมล
    ============================================================ */
 
-import { MOCK_CURRENT_USER } from "@/lib/mock-data";
+import { useAuth } from "@/context/AuthContext";
 import { ROLE_LABELS, ROLE_LABELS_EN } from "@/types";
 
 export default function ProfileView() {
-  const user = MOCK_CURRENT_USER;
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   const fields = [
     { label: "ชื่อ", value: user.name },

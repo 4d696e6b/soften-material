@@ -5,22 +5,22 @@
 
    โครงสร้าง Desktop:
    ┌──────────────────────────────────────────────┐
-   │  Topbar (logo + user avatar + logout)        │
+   │  Topbar (logo + user avatar + role + logout) │
    ├──────────┬───────────────────────────────────┤
    │ Sidebar  │          Content Area             │
-   │ (nav)    │          (children)                │
+   │ (nav)    │          (children)               │
    │          │                                   │
    └──────────┴───────────────────────────────────┘
 
    Mobile: Topbar + hamburger → sidebar drawer overlay
    ============================================================ */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import TULogo from "@/components/ui/TULogo";
-import { MOCK_CURRENT_USER } from "@/lib/mock-data";
-import { ROLE_LABELS_EN } from "@/types";
+import { useAuth } from "@/context/AuthContext";
+import { ROLE_LABELS, ROLE_LABELS_EN } from "@/types";
 import type { UserRole } from "@/types";
 
 /* ---- SVG Icons ---- */
@@ -114,17 +114,22 @@ function canAccessAdmin(role: UserRole): boolean {
   return role === "admin" || role === "moderator";
 }
 
-/* ---- Main Component ---- */
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, isInitialized, logout, loginAsRole } = useAuth();
 
-  const user = MOCK_CURRENT_USER;
+  /* Redirect to login if not authenticated */
+  useEffect(() => {
+    if (isInitialized && !user) {
+      router.replace("/login");
+    }
+  }, [isInitialized, user, router]);
 
   function handleLogout() {
-    /* TODO (Backend): fetch /api/auth/logout */
-    router.push("/login");
+    logout();
+    router.replace("/login");
   }
 
   function isActive(href: string): boolean {
@@ -133,6 +138,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     if (href !== "/admin" && pathname.startsWith(href)) return true;
     return false;
   }
+
+  /* ถ้ายังโหลด auth ไม่เสร็จ หรือไม่มี user ให้แสดง loading หรือไม่ render */
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-bg-page)" }}>
+        <div className="flex flex-col items-center gap-3">
+          <span
+            className="animate-spin inline-block w-8 h-8 rounded-full border-2"
+            style={{ borderColor: "rgba(0,0,0,0.1)", borderTopColor: "var(--color-tu-yellow)" }}
+          />
+          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>กำลังโหลดระบบ…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="min-h-dvh flex flex-col" style={{ background: "var(--color-bg-page)" }}>
@@ -161,13 +183,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {sidebarOpen ? <IconX /> : <IconMenu />}
           </button>
 
-          <TULogo size="sm" variant="dark" />
-          <span
-            className="text-sm font-semibold tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Soften Material
-          </span>
+          <Link href="/dashboard" className="flex items-center gap-2.5 text-inherit no-underline">
+            <TULogo size="sm" variant="dark" />
+            <span
+              className="text-sm font-semibold tracking-tight"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Soften Material
+            </span>
+          </Link>
 
           {/* Role badge */}
           <span className={`role-badge role-badge--${user.role} hidden sm:inline-flex`}>
@@ -175,8 +199,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </span>
         </div>
 
-        {/* Right: avatar + name + logout */}
-        <div className="flex items-center gap-3">
+        {/* Right: Role Switcher Demo + user avatar + name + logout */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Role Switcher for Mock Testing */}
+          <div className="flex items-center gap-1 bg-black/5 p-1 rounded-md text-xs">
+            <span className="text-[11px] font-medium px-1 hidden md:inline text-black/50">สลับบทบาท:</span>
+            {(["student", "contributor", "moderator", "admin"] as UserRole[]).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => loginAsRole(r)}
+                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all ${
+                  user.role === r
+                    ? "bg-white shadow-xs font-bold text-black"
+                    : "text-black/60 hover:text-black hover:bg-white/50"
+                }`}
+                title={`สลับเป็น ${ROLE_LABELS[r]}`}
+              >
+                {r.slice(0, 3).toUpperCase()}
+              </button>
+            ))}
+          </div>
+
           <div
             className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold select-none"
             style={{
@@ -190,7 +234,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <span
-            className="hidden sm:block text-sm"
+            className="hidden lg:block text-sm font-medium"
             style={{ color: "var(--color-text-secondary)" }}
           >
             {user.name}
@@ -200,7 +244,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             onClick={handleLogout}
             id="logout-btn"
-            className="text-sm px-3 py-1.5 rounded-sm transition-colors"
+            className="text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 rounded-sm transition-colors cursor-pointer"
             style={{ color: "var(--color-text-muted)", border: "1px solid var(--color-border)" }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = "var(--color-tu-red)";
@@ -294,7 +338,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               color: "var(--color-text-muted)",
             }}
           >
-            Soft-EN รุ่นที่ 13 · มธ.
+            <p className="font-medium text-black/70">เข้าสู่ระบบในฐานะ</p>
+            <p className="text-[11px] truncate text-black/50 font-mono">{user.email}</p>
           </div>
         </aside>
 

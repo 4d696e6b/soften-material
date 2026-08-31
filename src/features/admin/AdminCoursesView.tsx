@@ -4,12 +4,14 @@
    AdminCoursesView.tsx — Wrapper สำหรับ Course Management + role check
    ============================================================ */
 
-import { MOCK_CURRENT_USER } from "@/lib/mock-data";
+import { useAuth } from "@/context/AuthContext";
 import AccessDenied from "@/components/shared/AccessDenied";
 import CourseManagement from "./CourseManagement";
 
 export default function AdminCoursesView() {
-  const user = MOCK_CURRENT_USER;
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   if (user.role !== "admin" && user.role !== "moderator") {
     return <AccessDenied />;
