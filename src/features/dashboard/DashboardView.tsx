@@ -1,32 +1,18 @@
 "use client";
 
 /* ============================================================
-   DashboardView.tsx — หน้า Landing หลังเข้าสู่ระบบ (Phase 1)
+   DashboardView.tsx — หน้า Landing หลังเข้าสู่ระบบ (Phase 2)
 
    ประกอบด้วย:
-   1. Topbar: โลโก้ + ชื่อผู้ใช้ + ปุ่มออกจากระบบ
-   2. Hero section: ทักทายผู้ใช้
+   1. Hero section: ทักทายผู้ใช้
+   2. Quick links: ลิงก์เร็วไปหน้าสำคัญ
    3. Status cards: บอกสถานะ Phase ต่าง ๆ
-   4. Coming soon: บอกว่าฟีเจอร์ถัดไปกำลังมา
 
-   Mockup data:
-     - ชื่อ: Demo User
-     - อีเมล: demo@dome.tu.ac.th
-     - บทบาท: Student
-
-   เมื่อ backend พร้อม → แทนด้วย session จริง
+   Topbar และ Sidebar ย้ายไป AppShell.tsx แล้ว
    ============================================================ */
 
-import { useRouter } from "next/navigation";
-import TULogo from "@/components/ui/TULogo";
-
-/* ---- Mockup user (ลบออกเมื่อเชื่อม backend) ---- */
-const MOCK_USER = {
-  name: "Demo User",
-  email: "demo@dome.tu.ac.th",
-  role: "Student" as const,
-  initial: "D",
-};
+import Link from "next/link";
+import { MOCK_CURRENT_USER } from "@/lib/mock-data";
 
 /* ---- Phase roadmap สำหรับแสดงใน dashboard ---- */
 const PHASES = [
@@ -40,7 +26,7 @@ const PHASES = [
     phase: "Phase 2",
     title: "รายวิชาและบทบาท",
     description: "รายวิชา SF-xxx, โปรไฟล์, จัดการผู้ใช้ และ role-based access",
-    status: "upcoming" as const,
+    status: "current" as const,
   },
   {
     phase: "Phase 3",
@@ -63,254 +49,192 @@ const PHASES = [
 ];
 
 /* ---- Status badge colors ---- */
-const statusStyles: Record<"done" | "upcoming", { bg: string; text: string; dot: string; label: string }> = {
+const statusStyles: Record<"done" | "current" | "upcoming", { bg: string; text: string; dot: string; label: string }> = {
   done:     { bg: "#f0fdf4", text: "#15803d", dot: "#22c55e", label: "เสร็จแล้ว" },
+  current:  { bg: "#eff6ff", text: "#2563eb", dot: "#3b82f6", label: "กำลังพัฒนา" },
   upcoming: { bg: "#fafafa", text: "#888888", dot: "#dddddd", label: "กำลังมา" },
 };
 
-export default function DashboardView() {
-  const router = useRouter();
+/* ---- Quick Links ---- */
+const QUICK_LINKS = [
+  {
+    href: "/courses",
+    label: "รายวิชาทั้งหมด",
+    description: "ดูรายวิชา Soft-En ทุกปี",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/profile",
+    label: "โปรไฟล์ของฉัน",
+    description: "ดูข้อมูลบัญชีและบทบาท",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    ),
+  },
+];
 
-  /* ออกจากระบบ — TODO (Backend): เรียก /api/auth/logout แล้ว redirect */
-  function handleLogout() {
-    router.push("/login");
-  }
+export default function DashboardView() {
+  const user = MOCK_CURRENT_USER;
 
   return (
-    /* ============================================================
-       Page wrapper
-       ============================================================ */
-    <div
-      className="min-h-dvh flex flex-col"
-      style={{ background: "var(--color-bg-page)" }}
-    >
+    <div className="w-full max-w-4xl mx-auto px-5 py-8 sm:px-8">
 
-      {/* ============================================================
-          TOPBAR — ติดบนสุด
-          แสดงโลโก้, ชื่อโปรเจกต์, avatar และปุ่ม logout
-          ============================================================ */}
-      <header
-        className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 sm:px-8"
-        style={{
-          background: "var(--color-bg-card)",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        {/* Left: Logo + name */}
-        <div className="flex items-center gap-3">
-          <TULogo size="sm" variant="dark" />
-          <span
-            className="text-sm font-semibold tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Soften Material
-          </span>
-          {/* ป้ายบทบาทของผู้ใช้ */}
-          <span
-            className="hidden sm:inline-block text-xs px-2 py-0.5 rounded-full font-medium"
-            style={{
-              background: "var(--color-tu-yellow-light)",
-              color: "var(--color-tu-yellow-dim)",
-            }}
-          >
-            {MOCK_USER.role}
-          </span>
-        </div>
-
-        {/* Right: Avatar + logout */}
-        <div className="flex items-center gap-3">
-          {/* Avatar วงกลมตัวอักษรย่อ */}
-          <div
-            className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold select-none"
-            style={{
-              background: "var(--color-tu-yellow-light)",
-              color: "var(--color-tu-yellow-dim)",
-              border: "1.5px solid rgba(232,169,0,0.25)",
-            }}
-            title={MOCK_USER.email}
-          >
-            {MOCK_USER.initial}
-          </div>
-
-          {/* ชื่อผู้ใช้ (ซ่อนบน mobile เล็ก) */}
-          <span
-            className="hidden sm:block text-sm"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            {MOCK_USER.name}
-          </span>
-
-          {/* ปุ่มออกจากระบบ */}
-          <button
-            type="button"
-            onClick={handleLogout}
-            id="logout-btn"
-            className="text-sm px-3 py-1.5 rounded-[var(--radius-sm)] transition-colors"
-            style={{ color: "var(--color-text-muted)", border: "1px solid var(--color-border)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-tu-red)";
-              e.currentTarget.style.borderColor = "var(--color-tu-red)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-text-muted)";
-              e.currentTarget.style.borderColor = "var(--color-border)";
-            }}
-          >
-            ออกจากระบบ
-          </button>
-        </div>
-      </header>
-
-      {/* ============================================================
-          MAIN CONTENT
-          ============================================================ */}
-      <main className="flex-1 w-full max-w-4xl mx-auto px-5 py-10 sm:px-8">
-
-        {/* ---- Hero: ทักทาย ---- */}
-        <section className="mb-10">
-          {/* Eyebrow tag */}
-          <p
-            className="mb-3 text-xs font-medium tracking-widest uppercase"
-            style={{ color: "var(--color-tu-yellow-dim)", fontFamily: "monospace" }}
-          >
-            Software Engineering · Thammasat University
-          </p>
-
-          {/* Headline */}
-          <h1
-            className="text-3xl sm:text-4xl font-bold leading-tight mb-3"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            สวัสดี, {MOCK_USER.name} 👋
-          </h1>
-
-          {/* Sub */}
-          <p
-            className="text-base leading-relaxed max-w-xl"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            ยินดีต้อนรับสู่{" "}
-            <strong style={{ color: "var(--color-text-primary)" }}>Soften Material</strong>{" "}
-            — คลังเอกสารของนักศึกษา Soft-En มธ.
-            คุณล็อกอินด้วย{" "}
-            <span
-              style={{ color: "var(--color-text-primary)", fontFamily: "monospace", fontSize: "0.875rem" }}
-            >
-              {MOCK_USER.email}
-            </span>
-          </p>
-        </section>
-
-        {/* ---- Divider ---- */}
-        <div
-          className="mb-8 h-px"
-          style={{ background: "var(--color-border)" }}
-        />
-
-        {/* ---- Phase Status Cards ---- */}
-        <section>
-          <h2
-            className="mb-5 text-sm font-semibold uppercase tracking-wider"
-            style={{ color: "var(--color-text-muted)", fontFamily: "monospace" }}
-          >
-            Roadmap การพัฒนา
-          </h2>
-
-          {/* Grid: 1 col mobile, 2 col sm+ */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {PHASES.map((p) => {
-              const s = statusStyles[p.status];
-              return (
-                <div
-                  key={p.phase}
-                  className="rounded-[var(--radius-md)] p-5 transition-shadow"
-                  style={{
-                    background: "var(--color-bg-card)",
-                    border: "1px solid var(--color-border)",
-                  }}
-                >
-                  {/* Phase label + status badge */}
-                  <div className="mb-3 flex items-center justify-between">
-                    <span
-                      className="text-xs font-mono font-medium"
-                      style={{ color: "var(--color-text-muted)" }}
-                    >
-                      {p.phase}
-                    </span>
-                    {/* Status badge */}
-                    <span
-                      className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
-                      style={{ background: s.bg, color: s.text }}
-                    >
-                      <span
-                        className="inline-block w-1.5 h-1.5 rounded-full"
-                        style={{ background: s.dot }}
-                      />
-                      {s.label}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <p
-                    className="mb-1 font-semibold"
-                    style={{ color: "var(--color-text-primary)" }}
-                  >
-                    {p.title}
-                  </p>
-
-                  {/* Description */}
-                  <p
-                    className="text-sm leading-relaxed"
-                    style={{ color: "var(--color-text-secondary)" }}
-                  >
-                    {p.description}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ---- Coming soon notice ---- */}
-        <div
-          className="mt-8 rounded-[var(--radius-md)] px-5 py-4 flex items-start gap-3"
-          style={{
-            background: "var(--color-tu-yellow-light)",
-            border: "1px solid rgba(232,169,0,0.2)",
-          }}
+      {/* ---- Hero: ทักทาย ---- */}
+      <section className="mb-8">
+        <p
+          className="mb-2 text-xs font-medium tracking-widest uppercase"
+          style={{ color: "var(--color-tu-yellow-dim)", fontFamily: "monospace" }}
         >
-          {/* Info icon */}
-          <svg
-            className="shrink-0 mt-0.5"
-            width="16" height="16" viewBox="0 0 24 24"
-            fill="none" stroke="var(--color-tu-yellow-dim)"
-            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            aria-hidden="true"
+          Software Engineering · Thammasat University
+        </p>
+
+        <h1
+          className="text-2xl sm:text-3xl font-bold leading-tight mb-2"
+          style={{ color: "var(--color-text-primary)" }}
+        >
+          สวัสดี, {user.name} 👋
+        </h1>
+
+        <p
+          className="text-sm leading-relaxed max-w-xl"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          ยินดีต้อนรับสู่{" "}
+          <strong style={{ color: "var(--color-text-primary)" }}>Soften Material</strong>{" "}
+          — คลังเอกสารของนักศึกษา Soft-En มธ.
+          คุณล็อกอินด้วย{" "}
+          <span
+            style={{ color: "var(--color-text-primary)", fontFamily: "monospace", fontSize: "0.8125rem" }}
           >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <p className="text-sm" style={{ color: "var(--color-tu-yellow-dim)" }}>
-            <strong>Phase 1 Frontend เสร็จแล้ว</strong> — ฟีเจอร์คลังไฟล์และรายวิชากำลังพัฒนาใน Phase ถัดไป
-            ตอนนี้หน้าคลังยังว่างอยู่ รอ backend และ Phase 2 เสร็จก่อนนะ
-          </p>
+            {user.email}
+          </span>
+        </p>
+      </section>
+
+      {/* ---- Quick Links ---- */}
+      <section className="mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {QUICK_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="course-card flex items-start gap-3"
+            >
+              <div
+                className="shrink-0 mt-0.5"
+                style={{ color: "var(--color-tu-yellow)" }}
+              >
+                {link.icon}
+              </div>
+              <div>
+                <p
+                  className="font-semibold text-sm mb-0.5"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  {link.label}
+                </p>
+                <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                  {link.description}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
+      </section>
 
-      </main>
+      {/* ---- Divider ---- */}
+      <div className="mb-6 h-px" style={{ background: "var(--color-border)" }} />
 
-      {/* ============================================================
-          FOOTER
-          ============================================================ */}
-      <footer
-        className="py-4 text-center text-xs"
+      {/* ---- Phase Status Cards ---- */}
+      <section>
+        <h2
+          className="mb-4 text-xs font-semibold uppercase tracking-wider"
+          style={{ color: "var(--color-text-muted)", fontFamily: "monospace" }}
+        >
+          Roadmap การพัฒนา
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {PHASES.map((p) => {
+            const s = statusStyles[p.status];
+            return (
+              <div
+                key={p.phase}
+                className="rounded-md p-4 transition-shadow"
+                style={{
+                  background: "var(--color-bg-card)",
+                  border: `1px solid ${p.status === "current" ? "var(--color-info-border)" : "var(--color-border)"}`,
+                }}
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <span
+                    className="text-xs font-mono font-medium"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    {p.phase}
+                  </span>
+                  <span
+                    className="flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
+                    style={{ background: s.bg, color: s.text }}
+                  >
+                    <span
+                      className="inline-block w-1.5 h-1.5 rounded-full"
+                      style={{ background: s.dot }}
+                    />
+                    {s.label}
+                  </span>
+                </div>
+
+                <p
+                  className="mb-0.5 text-sm font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  {p.title}
+                </p>
+                <p
+                  className="text-xs leading-relaxed"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  {p.description}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ---- Phase 2 notice ---- */}
+      <div
+        className="mt-6 rounded-md px-4 py-3 flex items-start gap-3"
         style={{
-          borderTop: "1px solid var(--color-border)",
-          color: "var(--color-text-muted)",
+          background: "var(--color-info-bg)",
+          border: "1px solid var(--color-info-border)",
         }}
       >
-        Soften Material · Soft-EN รุ่นที่ 13 · Thammasat University
-      </footer>
+        <svg
+          className="shrink-0 mt-0.5"
+          width="16" height="16" viewBox="0 0 24 24"
+          fill="none" stroke="var(--color-info)"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <p className="text-sm" style={{ color: "var(--color-info)" }}>
+          <strong>Phase 2 กำลังพัฒนา</strong> — ระบบรายวิชาและบทบาทพร้อมแล้ว
+          คลังไฟล์ PDF จะเปิดให้ใช้งานใน Phase 3
+        </p>
+      </div>
     </div>
   );
 }

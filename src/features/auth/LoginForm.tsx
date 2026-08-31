@@ -125,7 +125,7 @@ export default function LoginForm() {
           ============================================================ */}
       {errors.form && (
         <div
-          className="mb-5 rounded-[var(--radius-sm)] px-4 py-3 text-sm"
+          className="mb-5 rounded-sm px-4 py-3 text-sm"
           style={{
             background: "var(--color-error-bg)",
             border: "1px solid var(--color-error-border)",

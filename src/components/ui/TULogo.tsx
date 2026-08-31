@@ -29,13 +29,13 @@ export default function TULogo({ size = "md", variant = "dark" }: TULogoProps) {
   return (
     /* Container สี่เหลี่ยมจัตุรัส มุมมน */
     <div
-      className={`${s.outer} relative flex items-center justify-center rounded-[var(--radius-sm)] overflow-hidden shrink-0`}
+      className={`${s.outer} relative flex items-center justify-center rounded-sm overflow-hidden shrink-0`}
       style={{ background: bg, border: `1px solid ${border}` }}
     >
       {/* แถบซ้าย: สีแดง TU */}
-      <div className="absolute left-0 top-0 h-full w-[3px]" style={{ background: barLeft }} />
+      <div className="absolute left-0 top-0 h-full w-0.75" style={{ background: barLeft }} />
       {/* แถบขวา: สีเหลือง TU */}
-      <div className="absolute right-0 top-0 h-full w-[3px]" style={{ background: barRight }} />
+      <div className="absolute right-0 top-0 h-full w-0.75" style={{ background: barRight }} />
       {/* ตัวอักษร SE ตรงกลาง */}
       <span
         className={`${s.text} font-bold tracking-tight select-none`}
