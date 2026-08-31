@@ -56,9 +56,25 @@ const statusStyles: Record<"done" | "current" | "upcoming", { bg: string; text: 
 };
 
 export default function DashboardView() {
-  const { user } = useAuth();
+  const { user, isInitialized } = useAuth();
 
-  if (!user) return null;
+  /* กรณี Auth ยังโหลดไม่เสร็จ ให้แสดง Skeleton loading */
+  if (!isInitialized || !user) {
+    return (
+      <div className="w-full max-w-5xl mx-auto px-5 py-16 flex flex-col items-center justify-center gap-3">
+        <span
+          className="animate-spin inline-block w-8 h-8 rounded-full border-2"
+          style={{ borderColor: "rgba(0,0,0,0.1)", borderTopColor: "var(--color-tu-yellow)" }}
+          aria-hidden="true"
+        />
+        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>กำลังโหลดข้อมูล…</p>
+      </div>
+    );
+  }
+
+  const role = user.role || "student";
+  const roleThai = ROLE_LABELS[role] || "นักศึกษา";
+  const roleEnglish = ROLE_LABELS_EN[role] || "Student";
 
   return (
     <div className="w-full max-w-5xl mx-auto px-5 py-8 sm:px-8">
@@ -68,8 +84,8 @@ export default function DashboardView() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className={`role-badge role-badge--${user.role}`}>
-                {ROLE_LABELS[user.role]} ({ROLE_LABELS_EN[user.role]})
+              <span className={`role-badge role-badge--${role}`}>
+                {roleThai} ({roleEnglish})
               </span>
               <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
                 Soft-En TU
@@ -92,10 +108,10 @@ export default function DashboardView() {
                 {user.email}
               </code>
               {" — "}
-              {user.role === "student" && "ค้นหาและเข้าถึงเอกสารการเรียน ข้อสอบเก่า และชีทสรุปสำหรับนักศึกษา Soft-En"}
-              {user.role === "contributor" && "ร่วมแบ่งปันชีทสรุปและเอกสารการเรียนเพื่อช่วยเพื่อนๆ ในสาขา"}
-              {user.role === "moderator" && "ตรวจสอบคุณภาพและความถูกต้องของเอกสารก่อนเผยแพร่สู่คลังรวม"}
-              {user.role === "admin" && "ควบคุมดูแลระบบ จัดการสิทธิ์ผู้ใช้งาน และโครงสร้างหลักสูตรรายวิชา"}
+              {role === "student" && "ค้นหาและเข้าถึงเอกสารการเรียน ข้อสอบเก่า และชีทสรุปสำหรับนักศึกษา Soft-En"}
+              {role === "contributor" && "ร่วมแบ่งปันชีทสรุปและเอกสารการเรียนเพื่อช่วยเพื่อนๆ ในสาขา"}
+              {role === "moderator" && "ตรวจสอบคุณภาพและความถูกต้องของเอกสารก่อนเผยแพร่สู่คลังรวม"}
+              {role === "admin" && "ควบคุมดูแลระบบ จัดการสิทธิ์ผู้ใช้งาน และโครงสร้างหลักสูตรรายวิชา"}
             </p>
           </div>
 
@@ -115,7 +131,7 @@ export default function DashboardView() {
           ============================================================ */}
 
       {/* 1. STUDENT VIEW */}
-      {user.role === "student" && (
+      {role === "student" && (
         <section className="mb-8 space-y-6">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--color-text-muted)" }}>
@@ -128,7 +144,7 @@ export default function DashboardView() {
                   <Link
                     key={year}
                     href="/courses"
-                    className="course-card p-4 rounded-md text-center hover:border-[var(--color-tu-yellow)]"
+                    className="course-card p-4 rounded-md text-center hover:border-tu-yellow"
                   >
                     <p className="text-lg font-bold" style={{ color: "var(--color-tu-yellow-dim)" }}>
                       ชั้นปีที่ {year}
@@ -154,7 +170,7 @@ export default function DashboardView() {
       )}
 
       {/* 2. CONTRIBUTOR VIEW */}
-      {user.role === "contributor" && (
+      {role === "contributor" && (
         <section className="mb-8 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-4 rounded-md border text-center" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
@@ -183,7 +199,7 @@ export default function DashboardView() {
       )}
 
       {/* 3. MODERATOR VIEW */}
-      {user.role === "moderator" && (
+      {role === "moderator" && (
         <section className="mb-8 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-4 rounded-md border text-center" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
@@ -212,7 +228,7 @@ export default function DashboardView() {
       )}
 
       {/* 4. ADMIN VIEW */}
-      {user.role === "admin" && (
+      {role === "admin" && (
         <section className="mb-8 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link href="/admin/users" className="course-card p-4 rounded-md">
