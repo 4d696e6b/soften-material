@@ -1,7 +1,14 @@
 "use client";
 
-import { AuthProvider } from "@/context/AuthProvider";
+import { AuthProvider as FirebaseAuthProvider } from "@/context/AuthProvider";
+import { AuthProvider as MockAuthProvider } from "@/context/AuthContext";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return (
+    <FirebaseAuthProvider>
+      <MockAuthProvider>
+        {children}
+      </MockAuthProvider>
+    </FirebaseAuthProvider>
+  );
 }

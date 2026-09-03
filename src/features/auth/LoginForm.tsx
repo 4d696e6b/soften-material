@@ -3,37 +3,27 @@
 /* ============================================================
    LoginForm.tsx — ฟอร์มเข้าสู่ระบบ
 
-<<<<<<< HEAD
-   Mock credentials (ใช้ระหว่างพัฒนา frontend):
-     - student@dome.tu.ac.th  (Student / นักศึกษา)
-     - con@dome.tu.ac.th      (Contributor / ผู้ส่งเอกสาร)
-     - mod@dome.tu.ac.th      (Moderator / ผู้ตรวจเนื้อหา)
-     - admin@dome.tu.ac.th    (Admin / ผู้ดูแลระบบ)
-     Password ทุกคน: password123
-=======
    Fields:
    1. อีเมล @dome.tu.ac.th (type="email", full address)
    2. รหัสผ่าน พร้อมปุ่มแสดง/ซ่อน
    3. ลิงก์ "ลืมรหัสผ่าน?"
    4. ปุ่ม "เข้าสู่ระบบ"
+   5. ลิงก์ "สมัครสมาชิก"
+   6. ปุ่ม Quick Mock Logins ตามบทบาท (สำหรับทดสอบ)
 
-   ยืนยันตัวตนผ่าน Firebase Auth
->>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
+   รองรับทั้ง Firebase Auth และ Mock Users
    ============================================================ */
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-<<<<<<< HEAD
-import { useAuth } from "@/context/AuthContext";
-import type { UserRole } from "@/types";
-=======
 import { FirebaseError } from "firebase/app";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { getFirebaseAuth, firebaseAuthMessage } from "@/lib/firebase";
 import { ALLOW_ANY_EMAIL, EMAIL_DOMAIN, MIN_PASSWORD_LENGTH } from "@/lib/auth/constants";
 import { isTuEmail, isValidEmail, normalizeEmail } from "@/lib/auth/email";
->>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
+import { useAuth } from "@/context/AuthContext";
+import type { UserRole } from "@/types";
 
 /* ---- Types ---- */
 interface FormValues {
@@ -47,12 +37,7 @@ interface FormErrors {
   form?: string;
 }
 
-<<<<<<< HEAD
-const EMAIL_DOMAIN = "@dome.tu.ac.th";
-
 /* ---- Validate ก่อน submit ---- */
-=======
->>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
 function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {};
 
@@ -112,14 +97,34 @@ export default function LoginForm() {
     setIsLoading(true);
     setErrors({});
 
-<<<<<<< HEAD
-    const email = values.email.trim().toLowerCase();
-    const result = login(email, values.password);
+    const email = normalizeEmail(values.email);
 
-    if (result.success) {
+    /* 1. ลอง Mock Auth ก่อนเพื่อความสะดวกรวดเร็วในการทดสอบ */
+    const mockResult = login(email, values.password);
+    if (mockResult.success) {
+      setIsLoading(false);
       router.push("/dashboard");
-    } else {
-      setErrors({ form: result.error || "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+      return;
+    }
+
+    /* 2. ถ้าไม่ใช่ mock account ให้ยืนยันตัวตนผ่าน Firebase Auth */
+    try {
+      const credential = await signInWithEmailAndPassword(
+        getFirebaseAuth(),
+        email,
+        values.password,
+      );
+
+      if (!credential.user.emailVerified && !ALLOW_ANY_EMAIL) {
+        router.push("/verify-email");
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch (error) {
+      const code = error instanceof FirebaseError ? error.code : "";
+      setErrors({ form: firebaseAuthMessage(code) || mockResult.error || "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+    } finally {
       setIsLoading(false);
     }
   }
@@ -131,44 +136,20 @@ export default function LoginForm() {
     if (result.success) {
       router.push("/dashboard");
     } else {
-=======
-    const email = normalizeEmail(values.email);
-    if (!ALLOW_ANY_EMAIL && !isTuEmail(email)) {
-      setErrors({ form: "อนุญาตเฉพาะอีเมล @dome.tu.ac.th เท่านั้น" });
-      setIsLoading(false);
-      return;
+      setErrors({ form: "ไม่สามารถเข้าสู่ระบบด่วนได้" });
     }
-
-    try {
-      const credential = await signInWithEmailAndPassword(
-        getFirebaseAuth(),
-        email,
-        values.password,
-      );
-
-      if (!credential.user.emailVerified) {
-        router.push("/verify-email");
-        return;
-      }
-
-      router.push("/dashboard");
-    } catch (error) {
-      const code = error instanceof FirebaseError ? error.code : "";
-      setErrors({ form: firebaseAuthMessage(code) });
-    } finally {
->>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   }
 
   return (
-<<<<<<< HEAD
     <div>
       <form onSubmit={handleSubmit} noValidate>
-        {/* Error banner */}
+        {/* ============================================================
+            Form-level error banner
+            ============================================================ */}
         {errors.form && (
           <div
-            className="mb-5 rounded-sm px-4 py-3 text-sm"
+            className="mb-5 rounded-[var(--radius-sm)] px-4 py-3 text-sm"
             style={{
               background: "var(--color-error-bg)",
               border: "1px solid var(--color-error-border)",
@@ -179,72 +160,11 @@ export default function LoginForm() {
           >
             {errors.form}
           </div>
-=======
-    <form onSubmit={handleSubmit} noValidate>
-
-      {/* ============================================================
-          Form-level error banner (เช่น credentials ผิด)
-          ============================================================ */}
-      {errors.form && (
-        <div
-          className="mb-5 rounded-[var(--radius-sm)] px-4 py-3 text-sm"
-          style={{
-            background: "var(--color-error-bg)",
-            border: "1px solid var(--color-error-border)",
-            color: "var(--color-error)",
-          }}
-          role="alert"
-          aria-live="assertive"
-        >
-          {errors.form}
-        </div>
-      )}
-
-      {/* ============================================================
-          Field 1: อีเมล @dome.tu.ac.th
-          placeholder บอก format ชัดเจน เช่น demo@dome.tu.ac.th
-          ============================================================ */}
-      <div className="mb-4">
-        <label
-          htmlFor="email"
-          className="mb-1.5 block text-sm font-medium"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          อีเมล
-        </label>
-
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          autoFocus
-          autoCapitalize="off"
-          autoCorrect="off"
-          spellCheck={false}
-          placeholder={ALLOW_ANY_EMAIL ? "you@gmail.com" : "demo@dome.tu.ac.th"}
-          value={values.email}
-          onChange={handleChange}
-          disabled={isLoading}
-          className={`auth-input ${errors.email ? "error" : ""}`}
-          aria-describedby={errors.email ? "email-error" : "email-hint"}
-          aria-invalid={!!errors.email}
-        />
-
-        {errors.email ? (
-          <p id="email-error" className="mt-1.5 text-xs" style={{ color: "var(--color-error)" }}>
-            {errors.email}
-          </p>
-        ) : (
-          <p id="email-hint" className="mt-1.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
-            {ALLOW_ANY_EMAIL
-              ? "ชั่วคราว: เข้าสู่ระบบด้วยอีเมลใดก็ได้เพื่อทดสอบ"
-              : "ใช้อีเมลโดเมน @dome.tu.ac.th เท่านั้น"}
-          </p>
->>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
         )}
 
-        {/* Field 1: อีเมล */}
+        {/* ============================================================
+            Field 1: อีเมล @dome.tu.ac.th
+            ============================================================ */}
         <div className="mb-4">
           <label
             htmlFor="email"
@@ -263,7 +183,7 @@ export default function LoginForm() {
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            placeholder="student@dome.tu.ac.th"
+            placeholder={ALLOW_ANY_EMAIL ? "student@dome.tu.ac.th" : "demo@dome.tu.ac.th"}
             value={values.email}
             onChange={handleChange}
             disabled={isLoading}
@@ -278,12 +198,16 @@ export default function LoginForm() {
             </p>
           ) : (
             <p id="email-hint" className="mt-1.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
-              ใช้อีเมลโดเมน @dome.tu.ac.th เท่านั้น
+              {ALLOW_ANY_EMAIL
+                ? "ใช้อีเมลโดเมน @dome.tu.ac.th หรืออีเมลทดสอบ"
+                : "ใช้อีเมลโดเมน @dome.tu.ac.th เท่านั้น"}
             </p>
           )}
         </div>
 
-        {/* Field 2: รหัสผ่าน */}
+        {/* ============================================================
+            Field 2: รหัสผ่าน
+            ============================================================ */}
         <div className="mb-2">
           <label
             htmlFor="password"
@@ -307,7 +231,6 @@ export default function LoginForm() {
               aria-invalid={!!errors.password}
             />
 
-<<<<<<< HEAD
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
@@ -368,6 +291,17 @@ export default function LoginForm() {
             "เข้าสู่ระบบ"
           )}
         </button>
+
+        {/* สมัครสมาชิก */}
+        <div className="mt-5 text-center">
+          <Link
+            href="/register"
+            className="text-sm transition-colors"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            ยังไม่มีบัญชี? สมัครสมาชิก
+          </Link>
+        </div>
       </form>
 
       {/* ---- Quick One-Click Mock Logins ---- */}
@@ -419,18 +353,5 @@ export default function LoginForm() {
         </p>
       </div>
     </div>
-=======
-      <div className="mt-5 text-center">
-        <Link
-          href="/register"
-          className="text-sm transition-colors"
-          style={{ color: "var(--color-text-muted)" }}
-        >
-          ยังไม่มีบัญชี? สมัครสมาชิก
-        </Link>
-      </div>
-
-    </form>
->>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
   );
 }

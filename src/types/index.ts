@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /* ============================================================
    types/index.ts — Type definitions สำหรับ Soften Material
    Phase 2: เพิ่ม User, Course, Role types
@@ -9,19 +8,20 @@
 export type UserRole = "student" | "contributor" | "moderator" | "admin";
 
 export interface User {
-=======
-export type UserRole = "student" | "contributor" | "moderator" | "admin";
-
-export interface AuthUser {
->>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
   id: string;
   name: string;
   email: string;
   role: UserRole;
-<<<<<<< HEAD
   initial: string;
   emailVerified: boolean;
   createdAt: string; // ISO date string
+}
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
 }
 
 /* ---- Course ---- */
@@ -56,6 +56,3 @@ export const ROLE_LABELS_EN: Record<UserRole, string> = {
   moderator: "Moderator",
   admin: "Admin",
 };
-=======
-}
->>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
