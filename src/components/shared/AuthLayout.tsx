@@ -65,7 +65,7 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
             คลังเอกสาร<br />Software Engineer TU
           </h1>
           <p
-            className="text-base leading-relaxed max-w-[300px]"
+            className="text-base leading-relaxed max-w-75"
             style={{ color: "rgba(0,0,0,0.65)" }}
           >
             ชีทสรุป ข้อสอบเก่า แบบฝึกหัด จากพี่ๆ เพื่อนๆ Soft-EN รวมไว้ในที่เดียว
@@ -125,11 +125,11 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
         </div>
 
         {/* ---- Form Card ---- */}
-        <div className="w-full max-w-[440px] animate-fade-in-up">
+        <div className="w-full max-w-110 animate-fade-in-up">
 
           {/* Card */}
           <div
-            className="rounded-[var(--radius-lg)] p-8 sm:p-10"
+            className="rounded-lg p-8 sm:p-10"
             style={{
               background: "var(--color-bg-card)",
               boxShadow: "var(--shadow-card)",

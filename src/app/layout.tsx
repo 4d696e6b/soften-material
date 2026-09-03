@@ -1,7 +1,11 @@
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
+<<<<<<< HEAD
+import { AuthProvider } from "@/context/AuthContext";
+=======
 import Providers from "@/app/providers";
+>>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-sans-thai",
@@ -38,9 +42,15 @@ export default function RootLayout({
           fontFamily: "var(--font-sans)",
         }}
       >
+<<<<<<< HEAD
+        <AuthProvider>
+          <main className="flex flex-1 flex-col">{children}</main>
+        </AuthProvider>
+=======
         <main className="flex flex-1 flex-col">
           <Providers>{children}</Providers>
         </main>
+>>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
       </body>
     </html>
   );
