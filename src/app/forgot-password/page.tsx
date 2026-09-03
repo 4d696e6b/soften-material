@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthLayout
       title="ลืมรหัสผ่าน?"
-      subtitle="กรอกรหัสนักศึกษา เราจะส่งลิงก์รีเซ็ตไปที่อีเมล @dome.tu.ac.th"
+      subtitle="ส่งลิงก์ได้เฉพาะอีเมล @dome.tu.ac.th ที่ลงทะเบียนแล้ว"
     >
       <ForgotPasswordForm />
     </AuthLayout>

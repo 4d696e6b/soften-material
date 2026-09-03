@@ -1,6 +1,7 @@
 "use client";
 
 /* ============================================================
+<<<<<<< HEAD
    DashboardView.tsx — หน้า Landing / Home หลังเข้าสู่ระบบ (Phase 2)
    
    ปรับแต่งเนื้อหาหน้าหลักแยกตามบทบาท (Role-Specific Home):
@@ -14,6 +15,27 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_LABELS, ROLE_LABELS_EN } from "@/types";
 import { MOCK_COURSES } from "@/lib/mock-data";
+=======
+   DashboardView.tsx — หน้า Landing หลังเข้าสู่ระบบ (Phase 1)
+
+   ประกอบด้วย:
+   1. Topbar: โลโก้ + ชื่อผู้ใช้ + ปุ่มออกจากระบบ
+   2. Hero section: ทักทายผู้ใช้
+   3. Status cards: บอกสถานะ Phase ต่าง ๆ
+   4. Coming soon: บอกว่าฟีเจอร์ถัดไปกำลังมา
+
+   ผู้ใช้มาจาก Firebase Auth
+   ============================================================ */
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import TULogo from "@/components/ui/TULogo";
+import { useAuth } from "@/context/AuthProvider";
+import { toAuthUser } from "@/lib/auth/user";
+import { getFirebaseAuth } from "@/lib/firebase";
+import type { AuthUser } from "@/types";
+>>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
 
 /* ---- Phase roadmap สำหรับแสดงใน dashboard ---- */
 const PHASES = [
@@ -55,7 +77,12 @@ const statusStyles: Record<"done" | "current" | "upcoming", { bg: string; text: 
   upcoming: { bg: "#fafafa", text: "#888888", dot: "#dddddd", label: "กำลังมา" },
 };
 
+function roleLabel(role: AuthUser["role"]) {
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
 export default function DashboardView() {
+<<<<<<< HEAD
   const { user, isInitialized } = useAuth();
 
   /* กรณี Auth ยังโหลดไม่เสร็จ ให้แสดง Skeleton loading */
@@ -75,10 +102,54 @@ export default function DashboardView() {
   const role = user.role || "student";
   const roleThai = ROLE_LABELS[role] || "นักศึกษา";
   const roleEnglish = ROLE_LABELS_EN[role] || "Student";
+=======
+  const router = useRouter();
+  const { firebaseUser, loading } = useAuth();
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!firebaseUser) {
+      router.replace("/login");
+      return;
+    }
+    if (!firebaseUser.emailVerified) {
+      router.replace("/verify-email");
+      return;
+    }
+
+    let cancelled = false;
+    toAuthUser(firebaseUser).then((mapped) => {
+      if (!cancelled) setUser(mapped);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [firebaseUser, loading, router]);
+
+  async function handleLogout() {
+    await signOut(getFirebaseAuth());
+    router.push("/login");
+  }
+
+  if (!user) {
+    return (
+      <div
+        className="min-h-dvh flex items-center justify-center"
+        style={{ background: "var(--color-bg-page)", color: "var(--color-text-muted)" }}
+      >
+        กำลังโหลด…
+      </div>
+    );
+  }
+
+  const initial = user.name.trim().charAt(0).toUpperCase() || "U";
+>>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
 
   return (
     <div className="w-full max-w-5xl mx-auto px-5 py-8 sm:px-8">
 
+<<<<<<< HEAD
       {/* ---- Hero Section: ทักทาย + แสดง Role ---- */}
       <section className="mb-8 p-6 rounded-lg border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -123,6 +194,81 @@ export default function DashboardView() {
               ดูรายวิชาทั้งหมด
             </Link>
           </div>
+=======
+      {/* ============================================================
+          TOPBAR — ติดบนสุด
+          แสดงโลโก้, ชื่อโปรเจกต์, avatar และปุ่ม logout
+          ============================================================ */}
+      <header
+        className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 sm:px-8"
+        style={{
+          background: "var(--color-bg-card)",
+          borderBottom: "1px solid var(--color-border)",
+        }}
+      >
+        {/* Left: Logo + name */}
+        <div className="flex items-center gap-3">
+          <TULogo size="sm" variant="dark" />
+          <span
+            className="text-sm font-semibold tracking-tight"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            Soften Material
+          </span>
+          {/* ป้ายบทบาทของผู้ใช้ */}
+          <span
+            className="hidden sm:inline-block text-xs px-2 py-0.5 rounded-full font-medium"
+            style={{
+              background: "var(--color-tu-yellow-light)",
+              color: "var(--color-tu-yellow-dim)",
+            }}
+          >
+            {roleLabel(user.role)}
+          </span>
+        </div>
+
+        {/* Right: Avatar + logout */}
+        <div className="flex items-center gap-3">
+          {/* Avatar วงกลมตัวอักษรย่อ */}
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold select-none"
+            style={{
+              background: "var(--color-tu-yellow-light)",
+              color: "var(--color-tu-yellow-dim)",
+              border: "1.5px solid rgba(232,169,0,0.25)",
+            }}
+            title={user.email}
+          >
+            {initial}
+          </div>
+
+          {/* ชื่อผู้ใช้ (ซ่อนบน mobile เล็ก) */}
+          <span
+            className="hidden sm:block text-sm"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            {user.name}
+          </span>
+
+          {/* ปุ่มออกจากระบบ */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            id="logout-btn"
+            className="text-sm px-3 py-1.5 rounded-[var(--radius-sm)] transition-colors"
+            style={{ color: "var(--color-text-muted)", border: "1px solid var(--color-border)" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--color-tu-red)";
+              e.currentTarget.style.borderColor = "var(--color-tu-red)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--color-text-muted)";
+              e.currentTarget.style.borderColor = "var(--color-border)";
+            }}
+          >
+            ออกจากระบบ
+          </button>
+>>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
         </div>
       </section>
 
@@ -158,6 +304,7 @@ export default function DashboardView() {
             </div>
           </div>
 
+<<<<<<< HEAD
           <div className="p-4 rounded-md border" style={{ background: "var(--color-bg-secondary)", borderColor: "var(--color-border)" }}>
             <p className="text-xs font-semibold mb-1" style={{ color: "var(--color-text-primary)" }}>
               💡 คำแนะนำสำหรับนักศึกษา
@@ -166,6 +313,31 @@ export default function DashboardView() {
               เอกสารในระบบจะแสดงเฉพาะไฟล์ที่ผ่านการตรวจสอบ (Published) แล้วเท่านั้น หากต้องการร่วมส่งเอกสาร สามารถติดต่อ Admin เพื่อปรับสิทธิ์เป็น <strong>Contributor</strong> ได้
             </p>
           </div>
+=======
+          {/* Headline */}
+          <h1
+            className="text-3xl sm:text-4xl font-bold leading-tight mb-3"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            สวัสดี, {user.name} 👋
+          </h1>
+
+          {/* Sub */}
+          <p
+            className="text-base leading-relaxed max-w-xl"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            ยินดีต้อนรับสู่{" "}
+            <strong style={{ color: "var(--color-text-primary)" }}>Soften Material</strong>{" "}
+            — คลังเอกสารของนักศึกษา Soft-En มธ.
+            คุณล็อกอินด้วย{" "}
+            <span
+              style={{ color: "var(--color-text-primary)", fontFamily: "monospace", fontSize: "0.875rem" }}
+            >
+              {user.email}
+            </span>
+          </p>
+>>>>>>> af73d6d8406ee3d2b1c2683df1df7e52ac5bc934
         </section>
       )}
 
